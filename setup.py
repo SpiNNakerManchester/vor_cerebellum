@@ -1,0 +1,36 @@
+from setuptools import setup, find_packages
+
+
+install_requires = [
+    'numpy',
+    'matplotlib',
+    'spinngym'
+]
+
+setup(
+    name='vor_cerebellum',
+    version='0.0.1',
+    packages=find_packages(),
+    url='https://github.com/SpiNNakerManchester/vor_cerebellum',
+    license="GNU GPLv3.0",
+    author='Petrut Antoniu Bogdan',
+    author_email='petrut.bogdan@manchester.ac.uk',
+    description='Simulating a small scale Cerebellum model on '
+                'SpiNNaker with online learning to perfor the vestibulo-ocular reflex',
+    # Requirements
+    install_requires=install_requires,
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+
+        "Intended Audience :: Science/Research",
+
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: MacOS",
+
+        "Programming Language :: Python :: 3"
+        "Programming Language :: Python :: 3.7"
+        
+        "Topic :: Scientific/Engineering",
+    ]
+)
