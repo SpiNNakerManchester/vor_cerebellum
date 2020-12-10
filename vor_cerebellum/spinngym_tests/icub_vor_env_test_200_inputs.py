@@ -4,7 +4,7 @@ from spinn_front_end_common.utilities.globals_variables import get_simulator
 from vor_cerebellum.utilities import *
 
 # Parameter definition
-runtime = 3000
+runtime = 5000
 # Build input SSP and output population
 input_size = 200  # neurons
 output_size = 200  # neurons
@@ -16,29 +16,17 @@ head_pos, head_vel = generate_head_position_and_velocity(1)
 perfect_eye_pos = np.concatenate((head_pos[500:], head_pos[:500]))
 perfect_eye_vel = np.concatenate((head_vel[500:], head_vel[:500]))
 
-input_spike_times = [[] for _ in range(input_size)]
-# the constant number (0.000031) is the effect of a single spike on the head position
-# assert (np.isclose(np.abs(np.diff(head_pos)[0]), no_required_spikes_per_chunk * 0.000031), 0.001)
-sub_head_pos = np.diff(head_pos)
-head_movement_per_spike = 2 ** (-15) * gain
-sub_eye_pos = np.diff(np.concatenate((perfect_eye_pos, [perfect_eye_pos[0]])))
-
-# no_required_spikes_per_chunk = 200
-no_required_spikes_per_chunk = np.ceil(np.abs(sub_head_pos[0]) / head_movement_per_spike)
-
-# build ICubVorEnv model
 error_window_size = 10  # ms
-npc_limit = 200 # 25
-no_input_cores = int(input_size / npc_limit)
+npc_limit = 50
 input_spike_times = [[] for _ in range(input_size)]
-for ts in range(runtime - 1):
-    # if 1000 <= ts < 2000:
-    #     continue
-    sgn = np.sign(sub_eye_pos[ts % 1000])
-    spikes_during_chunk = np.ceil(np.abs(sub_eye_pos[ts % 1000]) / head_movement_per_spike)
-    for i in range(int(spikes_during_chunk)):
-        x = int(sgn <= 0)
-        input_spike_times[(i % no_input_cores) * npc_limit + x].append(ts)
+
+for i in range(5):
+    input_spike_times[i * 2] = [250 + (10 * 2 * i) for _ in range(1)]
+    input_spike_times[2 * i + 1] = [500 + (10 * (2 * i + 1)) for _ in range(1)]
+    input_spike_times[50 + i * 2] = [750 + (10 * 2 * i) for _ in range(10 + i)]
+    input_spike_times[100 + 2 * i + 1] = [1000 + (10 * (2 * i + 1)) for _ in range(10 + i)]
+    input_spike_times[150 + i * 2] = [1250 + (10 * 2 * i) for _ in range(100 + i)]
+    input_spike_times[150 + 2 * i + 1] = [1500 + (10 * (2 * i + 1)) for _ in range(100 + i)]
 
 # Setup
 p.setup(timestep=1.0)
@@ -97,6 +85,6 @@ simulation_parameters = {
 
 # plot the data from the ICubVorEnv pop
 plot_results(results_dict=results, simulation_parameters=simulation_parameters,
-             name="spinngym_icub_vor_test_perfect")
+             name="figures/spinngym_icub_vor_test_200_inputs")
 
 print("Done")

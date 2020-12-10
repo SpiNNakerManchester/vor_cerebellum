@@ -2,6 +2,7 @@ import numpy as np
 import pylab as plt
 import matplotlib as mlib
 import copy
+import os
 
 # ensure we use viridis as the default cmap
 plt.viridis()
@@ -15,6 +16,73 @@ viridis_cmap = mlib.cm.get_cmap('viridis')
 
 ICUB_VOR_VENV_POP_SIZE = 2
 POS_TO_VEL = 2 * np.pi * 0.001
+
+fig_folder = "figures/"
+# Check if the folders exist
+if not os.path.isdir(fig_folder) and not os.path.exists(fig_folder):
+    os.mkdir(fig_folder)
+
+PREFFERED_ORDER = [
+    'mossy_fibers',
+    'granule',
+    'golgi',
+    'purkinje',
+    'climbing_fibers'
+    'vn'
+]
+
+
+def get_plot_order(for_keys):
+    # Compute plot order
+    plot_order = []
+    # only focus on keys for pops that have spikes
+    key_duplicate = list(for_keys)
+    key_duplicate.sort()
+    for pref in PREFFERED_ORDER:
+        for i, key in enumerate(key_duplicate):
+            if pref in key:
+                plot_order.append(key)
+                key_duplicate.pop(i)
+
+    # add remaining keys to the end of plot order
+    plot_order += key_duplicate
+    print("Plot order:", plot_order)
+    return plot_order
+
+
+def color_for_index(index, size, cmap=viridis_cmap):
+    return cmap(index / (size + 1))
+
+
+def convert_spiketrains(spiketrains):
+    """ Converts a list of spiketrains into spynakker7 format
+
+    :param spiketrains: List of SpikeTrains
+    :rtype: nparray
+    """
+    if len(spiketrains) == 0:
+        return np.empty(shape=(0, 2))
+
+    neurons = np.concatenate([
+        np.repeat(x.annotations['source_index'], len(x))
+        for x in spiketrains])
+    spikes = np.concatenate([x.magnitude for x in spiketrains])
+    return np.column_stack((neurons, spikes))
+
+
+def convert_spikes(neo, run=0):
+    """ Extracts the spikes for run one from a Neo Object
+
+    :param neo: neo Object including Spike Data
+    :param run: Zero based index of the run to extract data for
+    :type run: int
+    :rtype: nparray
+    """
+    if len(neo.segments) <= run:
+        raise ValueError(
+            "Data only contains {} so unable to run {}. Note run is the "
+            "zero based index.".format(len(neo.segments), run))
+    return convert_spiketrains(neo.segments[run].spiketrains)
 
 
 # Examples of get functions for variables
@@ -125,7 +193,7 @@ def plot_results(results_dict, simulation_parameters, name):
         s=1, color=viridis_cmap(.25))
 
     plt.xlim([0, runtime])
-    plt.ylim([-0.1, vn_size+0.1])
+    plt.ylim([-0.1, vn_size + 0.1])
     # L/R counts
     plt.subplot(5, 1, 2)
     plt.plot(x_plot, l_counts, 'o', color=viridis_cmap(.25), label="l_counts")
@@ -168,7 +236,7 @@ def plot_results(results_dict, simulation_parameters, name):
         s=1, color=viridis_cmap(.25))
     # plt.legend(loc="best")
     plt.xlim([0, runtime])
-    plt.ylim([-0.1, cf_size+0.1])
+    plt.ylim([-0.1, cf_size + 0.1])
     plt.xlabel("Time (ms)")
     save_figure(plt, name, extensions=[".png", ])
     plt.close(fig)
