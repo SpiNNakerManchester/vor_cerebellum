@@ -1,12 +1,7 @@
 import spynnaker8 as p
 import spinn_gym as gym
-
-from pyNN.utility.plotting import Figure, Panel
-import matplotlib.pyplot as plt
-import numpy as np
-import os
 from spinn_front_end_common.utilities.globals_variables import get_simulator
-from icub_utilities import *
+from vor_cerebellum.utilities import *
 
 # Parameter definition
 runtime = 5000
