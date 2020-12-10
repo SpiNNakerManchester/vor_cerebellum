@@ -141,5 +141,10 @@ dmypy.json
 cython_debug/
 
 # sPyNNaker.cfg
-sPyNNaker.cfg
+*.cfg
+
+# figures
+*.png
+*.pdf
+*.out
 

@@ -17,7 +17,7 @@ setup(
     author='Petrut Antoniu Bogdan',
     author_email='petrut.bogdan@manchester.ac.uk',
     description='Simulating a small scale Cerebellum model on '
-                'SpiNNaker with online learning to perfor the vestibulo-ocular reflex',
+                'SpiNNaker with online learning to perform the vestibulo-ocular reflex',
     # Requirements
     install_requires=install_requires,
     classifiers=[
