@@ -22,7 +22,23 @@ neuron_params = {
 
 # PF-PC learning parameters
 pfpc_min_weight = 0
-pfpc_max_weight = 10 * nS / uS
-pfpc_ltp_constant = 1 * nS / uS
+pfpc_max_weight = 0.1
+pfpc_initial_weight = 0.01
+pfpc_ltp_constant = 0.01
 pfpc_t_peak = 100  # ms
-pfpc_initial_weight = 4 * nS / uS
+pfpc_plasticity_delay = 4  # ms
+
+# MF-VN learning parameters
+mfvn_min_weight = 0
+mfvn_max_weight = 0.1
+mfvn_initial_weight = 0.005
+mfvn_ltp_constant = 0.01
+mfvn_beta = 11
+mfvn_sigma = 201
+mfvn_plasticity_delay = 4  # ms
+
+
+# Static weights
+conn_params = {
+    # TODO
+}

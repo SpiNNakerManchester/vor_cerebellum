@@ -4,17 +4,18 @@ from pyNN.utility.plotting import Figure, Panel
 import matplotlib.pyplot as plt
 from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pfpc_ltp_constant, pfpc_t_peak,
+                                       pfpc_plasticity_delay, pfpc_initial_weight,
                                        rbls, neuron_params)
 
 p.setup(1, min_delay=1, max_delay=15)  # simulation timestep (ms)
 runtime = 500
 # Learning parameters
-min_weight = 0
-max_weight = 0.1
-pot_alpha = 0.01
-t_peak = 100
+# min_weight = 0
+# max_weight = 0.1
+# pot_alpha = 0.01
+# t_peak = 100
 initial_weight = 0.05
-plastic_delay = 4
+# plastic_delay = 4
 
 purkinje_cell = p.Population(1,  # number of neurons
                              p.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
@@ -41,11 +42,11 @@ climbing_fibre = p.Population(1,  # number of sources
 
 # Create projection from GC to PC
 pfpc_plas = p.STDPMechanism(
-    timing_dependence=p.extra_models.TimingDependencePFPC(t_peak=t_peak),
-    weight_dependence=p.extra_models.WeightDependencePFPC(w_min=min_weight,
-                                                          w_max=max_weight,
-                                                          pot_alpha=pot_alpha),
-    weight=initial_weight, delay=plastic_delay)
+    timing_dependence=p.extra_models.TimingDependencePFPC(t_peak=pfpc_t_peak),
+    weight_dependence=p.extra_models.WeightDependencePFPC(w_min=pfpc_min_weight,
+                                                          w_max=pfpc_max_weight,
+                                                          pot_alpha=pfpc_ltp_constant),
+    weight=initial_weight, delay=pfpc_plasticity_delay)
 
 synapse_pfpc = p.Projection(
     granular_cell, purkinje_cell, p.AllToAllConnector(),

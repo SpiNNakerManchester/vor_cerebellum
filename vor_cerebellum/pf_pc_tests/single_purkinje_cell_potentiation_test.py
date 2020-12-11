@@ -8,12 +8,13 @@ from pyNN.utility.plotting import Figure, Panel
 import matplotlib.pyplot as plt
 from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pfpc_ltp_constant, pfpc_t_peak,
+                                       pfpc_plasticity_delay,
                                        rbls, neuron_params)
 
 initial_weight = 0.0
-plastic_delay = 4
 
 p.setup(1)  # simulation timestep (ms)
+
 purkinje_cell = p.Population(1,  # number of neurons
                              p.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
                              label="Purkinje Cell",
@@ -35,7 +36,7 @@ pfpc_plas = p.STDPMechanism(
     weight_dependence=p.extra_models.WeightDependencePFPC(w_min=pfpc_min_weight,
                                                           w_max=pfpc_max_weight,
                                                           pot_alpha=pfpc_ltp_constant),
-    weight=initial_weight, delay=plastic_delay)
+    weight=initial_weight, delay=pfpc_plasticity_delay)
 
 synapse_pfpc = p.Projection(
     granular_cell, purkinje_cell, p.OneToOneConnector(),
@@ -58,10 +59,9 @@ purkinje_data = purkinje_cell.get_data()
 # Release and clean the machine
 p.end()
 
-for i in pf_weights:
-    print(i)
-
 pf_weights = np.asarray(pf_weights).ravel()
+print(pf_weights)
+print(np.diff(pf_weights))
 
 # Plot
 fig = plt.figure(figsize=(4, 4), dpi=400)
@@ -87,8 +87,9 @@ F = Figure(
 )
 plt.savefig("figures/pc_single_potentiation.png", dpi=400)
 
+thresh = 0.0001
 assert np.all(np.isclose(pf_weights,
                          np.arange(no_runs) * pfpc_ltp_constant,
-                         0.001)), "PF-PC weights are not within 0.001 of the correct value"
+                         thresh)), "PF-PC weights are not within {} of the correct value".format(thresh)
 
 print("Done")
