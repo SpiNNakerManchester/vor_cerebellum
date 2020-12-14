@@ -1,4 +1,9 @@
-from brian2.units import nS, uS
+"""
+Parameters used in the cerebellum experiments
+"""
+
+L_RATE = 2
+H_RATE = 20
 
 # Units used in PyNN simulations: http://neuralensemble.org/docs/PyNN/units.html
 
@@ -22,7 +27,7 @@ neuron_params = {
 
 # PF-PC learning parameters
 pfpc_min_weight = 0
-pfpc_max_weight = 0.1
+pfpc_max_weight = 0.01
 pfpc_initial_weight = 0.01
 pfpc_ltp_constant = 0.01
 pfpc_t_peak = 100  # ms
@@ -30,15 +35,59 @@ pfpc_plasticity_delay = 4  # ms
 
 # MF-VN learning parameters
 mfvn_min_weight = 0
-mfvn_max_weight = 0.1
-mfvn_initial_weight = 0.005
-mfvn_ltp_constant = 0.01
+mfvn_max_weight = 0.005
+mfvn_initial_weight = 0.001
+mfvn_ltp_constant = 0.001
 mfvn_beta = 11
 mfvn_sigma = 201
 mfvn_plasticity_delay = 4  # ms
 
+# Static weights and delays
+CONNECTIVITY_MAP = {
+    'mf_grc': {
+        'pre': 'mossy_fibers',
+        'post': 'granule',
+        'weight': 0.5,  # uS
+        'delay': [1.0, 10.0],  # ms
+    },
+    'mf_goc': {
+        'pre': 'mossy_fibers',
+        'post': 'golgi',
+        'weight': 0.1,  # uS
+        'delay': [1.0, 10.0],  # ms
+    },
+    'mf_vn': {
+        'pre': 'mossy_fibers',
+        'post': 'purkinje',
+        'weight': 0.0005,  # uS
+        'delay': [1.0, 10.0],  # ms
+    },
 
-# Static weights
-conn_params = {
-    # TODO
+    'pf_pc': {
+        'pre': 'granule',
+        'post': 'purkinje',
+        'weight': 0.005,  # uS
+        'delay': [1.0, 10.0],  # ms
+    },
+
+    'goc_grc': {
+        'pre': 'golgi',
+        'post': 'granule',
+        'weight': 0.002,  # uS
+        'delay': [1.0, 10.0],  # ms
+    },
+
+    'pc_vn': {
+        'pre': 'purkinje',
+        'post': 'vn',
+        'weight': 0.01,  # uS
+        'delay': [1.0, 10.0],  # ms
+    },
+
+    'cf_pc': {
+        'pre': 'climbing_fibres',
+        'post': 'purkinje',
+        'weight': 0.0,  # uS
+        'delay': 4,  # ms
+    },
 }

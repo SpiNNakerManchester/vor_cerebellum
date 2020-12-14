@@ -1,5 +1,5 @@
 from __future__ import print_function
-import spynnaker8 as p
+import spynnaker8 as sim
 from pyNN.utility.plotting import Figure, Panel
 from vor_cerebellum.utilities import *
 from vor_cerebellum.parameters import (mfvn_min_weight, mfvn_max_weight,
@@ -11,34 +11,34 @@ from vor_cerebellum.parameters import (mfvn_min_weight, mfvn_max_weight,
 
 initial_weight = 0.
 
-p.setup(1)  # simulation timestep (ms)
+sim.setup(1)  # simulation timestep (ms)
 
-vestibular_neuclei = p.Population(1,  # number of neurons
-                                  p.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
-                                  label="Vestibular Nuclei",  # identifier
-                                  additional_parameters={"rb_left_shifts": rbls['vn']}
-                                  )
+vestibular_neuclei = sim.Population(1,  # number of neurons
+                                    sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
+                                    label="Vestibular Nuclei",  # identifier
+                                    additional_parameters={"rb_left_shifts": rbls['vn']}
+                                    )
 
 # Spike source to send spike via synapse
 spike_times = [101, 201, 301, 401, 501, 601, 701, 801, 901]
 
-mossy_fibre_src = p.Population(1,  # number of sources
-                               p.SpikeSourceArray,  # source type
-                               {'spike_times': spike_times},  # source spike times
-                               label="MF"  # identifier
-                               )
+mossy_fibre_src = sim.Population(1,  # number of sources
+                                 sim.SpikeSourceArray,  # source type
+                                 {'spike_times': spike_times},  # source spike times
+                                 label="MF"  # identifier
+                                 )
 
 # Create projection from MF to VN
-mfvn_plas = p.STDPMechanism(
-    timing_dependence=p.extra_models.TimingDependenceMFVN(beta=mfvn_beta,
-                                                          sigma=mfvn_sigma),
-    weight_dependence=p.extra_models.WeightDependenceMFVN(w_min=mfvn_min_weight,
-                                                          w_max=mfvn_max_weight,
-                                                          pot_alpha=mfvn_ltp_constant),
+mfvn_plas = sim.STDPMechanism(
+    timing_dependence=sim.extra_models.TimingDependenceMFVN(beta=mfvn_beta,
+                                                            sigma=mfvn_sigma),
+    weight_dependence=sim.extra_models.WeightDependenceMFVN(w_min=mfvn_min_weight,
+                                                            w_max=0.01,
+                                                            pot_alpha=mfvn_ltp_constant),
     weight=initial_weight, delay=mfvn_plasticity_delay)
 
-synapse_mfvn = p.Projection(
-    mossy_fibre_src, vestibular_neuclei, p.AllToAllConnector(),
+synapse_mfvn = sim.Projection(
+    mossy_fibre_src, vestibular_neuclei, sim.AllToAllConnector(),
     synapse_type=mfvn_plas, receptor_type="excitatory")
 
 mossy_fibre_src.record('spikes')
@@ -49,12 +49,12 @@ no_runs = len(spike_times)
 run_length = 100
 runtime = run_length * no_runs
 for i in range(no_runs):
-    p.run(run_length)
+    sim.run(run_length)
     mf_weights.append(synapse_mfvn.get('weight', 'list', with_address=False))
 
 mossy_fibre_src_spikes = mossy_fibre_src.get_data('spikes')
 vestibular_neuclei_data = vestibular_neuclei.get_data()
-p.end()
+sim.end()
 
 mf_weights = np.asarray(mf_weights).ravel()
 print(mf_weights)
@@ -90,9 +90,9 @@ F = Figure(
 
 plt.savefig("figures/vn_single_potentiation.png", dpi=400)
 
-thresh = 0.0001
+thresh = 0.001
 assert np.all(np.isclose(mf_weights,
                          np.arange(no_runs) * mfvn_ltp_constant,
-                         0.0001)), "MF_VN weights are not within {} of the correct value".format(thresh)
+                         thresh)), "MF_VN weights are not within {} of the correct value".format(thresh)
 
 print("Done")

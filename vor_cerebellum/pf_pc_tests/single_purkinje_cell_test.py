@@ -1,5 +1,5 @@
 from __future__ import print_function
-import spynnaker8 as p
+import spynnaker8 as sim
 from pyNN.utility.plotting import Figure, Panel
 import matplotlib.pyplot as plt
 from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
@@ -7,7 +7,7 @@ from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pfpc_plasticity_delay, pfpc_initial_weight,
                                        rbls, neuron_params)
 
-p.setup(1, min_delay=1, max_delay=15)  # simulation timestep (ms)
+sim.setup(1, min_delay=1, max_delay=15)  # simulation timestep (ms)
 runtime = 500
 # Learning parameters
 # min_weight = 0
@@ -17,58 +17,58 @@ runtime = 500
 initial_weight = 0.05
 # plastic_delay = 4
 
-purkinje_cell = p.Population(1,  # number of neurons
-                             p.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
-                             additional_parameters={"rb_left_shifts": rbls['purkinje']},
-                             label="PC"  # identifier
-                             )
+purkinje_cell = sim.Population(1,  # number of neurons
+                               sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
+                               additional_parameters={"rb_left_shifts": rbls['purkinje']},
+                               label="PC"  # identifier
+                               )
 
 # Spike source to send spike via synapse
 spike_times = [50, 150, 270]
 
-granular_cell = p.Population(1,  # number of sources
-                             p.SpikeSourceArray,  # source type
-                             {'spike_times': spike_times},  # source spike times
-                             label="GrC"  # identifier
-                             )
+granular_cell = sim.Population(1,  # number of sources
+                               sim.SpikeSourceArray,  # source type
+                               {'spike_times': spike_times},  # source spike times
+                               label="GrC"  # identifier
+                               )
 
 # Spike source to send spike via synapse from climbing fibre
 spike_times_2 = [100, 104, 107, 246]
-climbing_fibre = p.Population(1,  # number of sources
-                              p.SpikeSourceArray,  # source type
-                              {'spike_times': spike_times_2},  # source spike times
-                              label="CF"  # identifier
-                              )
+climbing_fibre = sim.Population(1,  # number of sources
+                                sim.SpikeSourceArray,  # source type
+                                {'spike_times': spike_times_2},  # source spike times
+                                label="CF"  # identifier
+                                )
 
 # Create projection from GC to PC
-pfpc_plas = p.STDPMechanism(
-    timing_dependence=p.extra_models.TimingDependencePFPC(t_peak=pfpc_t_peak),
-    weight_dependence=p.extra_models.WeightDependencePFPC(w_min=pfpc_min_weight,
-                                                          w_max=pfpc_max_weight,
-                                                          pot_alpha=pfpc_ltp_constant),
+pfpc_plas = sim.STDPMechanism(
+    timing_dependence=sim.extra_models.TimingDependencePFPC(t_peak=pfpc_t_peak),
+    weight_dependence=sim.extra_models.WeightDependencePFPC(w_min=pfpc_min_weight,
+                                                            w_max=pfpc_max_weight,
+                                                            pot_alpha=pfpc_ltp_constant),
     weight=initial_weight, delay=pfpc_plasticity_delay)
 
-synapse_pfpc = p.Projection(
-    granular_cell, purkinje_cell, p.AllToAllConnector(),
+synapse_pfpc = sim.Projection(
+    granular_cell, purkinje_cell, sim.AllToAllConnector(),
     synapse_type=pfpc_plas, receptor_type="excitatory")
 
 # Create projection from CF to PC
-synapse = p.Projection(
-    climbing_fibre, purkinje_cell, p.OneToOneConnector(),
-    p.StaticSynapse(weight=0.0, delay=1), receptor_type="excitatory")
+synapse = sim.Projection(
+    climbing_fibre, purkinje_cell, sim.OneToOneConnector(),
+    sim.StaticSynapse(weight=0.0, delay=1), receptor_type="excitatory")
 
 granular_cell.record('spikes')
 climbing_fibre.record('spikes')
 purkinje_cell.record("all")
 
-p.run(runtime)
+sim.run(runtime)
 
 granluar_cell_spikes = granular_cell.get_data('spikes')
 climbing_fibre_spikes = climbing_fibre.get_data('spikes')
 purkinje_data = purkinje_cell.get_data()
 
 pf_weights = synapse_pfpc.get('weight', 'list', with_address=False)
-p.end()
+sim.end()
 print("Final PF-PC weight", pf_weights)
 
 # Plot
