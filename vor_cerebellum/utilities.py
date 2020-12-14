@@ -24,11 +24,11 @@ if not os.path.isdir(fig_folder) and not os.path.exists(fig_folder):
     os.mkdir(fig_folder)
 
 PREFFERED_ORDER = [
-    'mossy_fibers',
+    'mossy_fibres',
     'granule',
     'golgi',
     'purkinje',
-    'climbing_fibers'
+    'climbing_fibres'
     'vn'
 ]
 
@@ -75,9 +75,9 @@ COMMON_DISPLAY_NAMES = {
     'pf_sc': "pf-SC",
     'sc_pc': "SC-PC",
     # iCub VOR-related
-    'mossy_fibers': "MF",
+    'mossy_fibres': "MF",
     'vn': "VN",
-    'climbing_fibers': "CF",
+    'climbing_fibres': "CF",
     'mf_grc': "MF-GrC",
     'pc_vn': "PC-VN",
     'mf_vn': "MF-VN",

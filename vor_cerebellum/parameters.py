@@ -9,12 +9,12 @@ H_RATE = 20
 
 # Ring buffer left shifts (RB LS)
 rbls = {
-    'mossy_fibers': None,
+    'mossy_fibres': None,
     'granule': [6, 6],
     'golgi': [6, 6],
     'purkinje': [6, 6],
     'vn': [6, 6],
-    'climbing_fibers': None,
+    'climbing_fibres': None,
 }
 
 # Neuron parameters
@@ -28,14 +28,14 @@ neuron_params = {
 # PF-PC learning parameters
 pfpc_min_weight = 0
 pfpc_max_weight = 0.01
-pfpc_initial_weight = 0.01
-pfpc_ltp_constant = 0.01
+pfpc_initial_weight = 0.005
+pfpc_ltp_constant = 0.0005
 pfpc_t_peak = 100  # ms
 pfpc_plasticity_delay = 4  # ms
 
 # MF-VN learning parameters
 mfvn_min_weight = 0
-mfvn_max_weight = 0.005
+mfvn_max_weight = 0.01
 mfvn_initial_weight = 0.001
 mfvn_ltp_constant = 0.001
 mfvn_beta = 11
@@ -52,30 +52,30 @@ num_PC_neurons = 200
 num_VN_neurons = 200
 num_CF_neurons = 200
 all_neurons = {
-    "mossy_fibers": num_MF_neurons,
+    "mossy_fibres": num_MF_neurons,
     "granule": num_GC_neurons,
     "golgi": num_GOC_neurons,
     "purkinje": num_PC_neurons,
     "vn": num_VN_neurons,
-    "climbing_fibers": num_CF_neurons
+    "climbing_fibres": num_CF_neurons
 }
 
 # Static weights and dela
 CONNECTIVITY_MAP = {
     'mf_grc': {
-        'pre': 'mossy_fibers',
+        'pre': 'mossy_fibres',
         'post': 'granule',
         'weight': 0.5,  # uS
         'delay': [1.0, 10.0],  # ms
     },
     'mf_goc': {
-        'pre': 'mossy_fibers',
+        'pre': 'mossy_fibres',
         'post': 'golgi',
         'weight': 0.1,  # uS
         'delay': [1.0, 10.0],  # ms
     },
     'mf_vn': {
-        'pre': 'mossy_fibers',
+        'pre': 'mossy_fibres',
         'post': 'purkinje',
         'weight': 0.0005,  # uS
         'delay': [1.0, 10.0],  # ms
