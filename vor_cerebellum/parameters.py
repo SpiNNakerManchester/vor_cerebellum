@@ -42,7 +42,25 @@ mfvn_beta = 11
 mfvn_sigma = 201
 mfvn_plasticity_delay = 4  # ms
 
-# Static weights and delays
+
+# Neurons
+# Network parameters
+num_MF_neurons = 100
+num_GC_neurons = 2000
+num_GOC_neurons = 100
+num_PC_neurons = 200
+num_VN_neurons = 200
+num_CF_neurons = 200
+all_neurons = {
+    "mossy_fibers": num_MF_neurons,
+    "granule": num_GC_neurons,
+    "golgi": num_GOC_neurons,
+    "purkinje": num_PC_neurons,
+    "vn": num_VN_neurons,
+    "climbing_fibers": num_CF_neurons
+}
+
+# Static weights and dela
 CONNECTIVITY_MAP = {
     'mf_grc': {
         'pre': 'mossy_fibers',
