@@ -3,6 +3,7 @@ import pylab as plt
 import matplotlib as mlib
 import copy
 import os
+import string
 
 # ensure we use viridis as the default cmap
 plt.viridis()
@@ -30,6 +31,73 @@ PREFFERED_ORDER = [
     'climbing_fibers'
     'vn'
 ]
+
+COMMON_DISPLAY_NAMES = {
+    'f_peak': "$f_{peak}$ (Hz)",
+    'spinnaker': "SpiNNaker",
+    'nest': "NEST",
+    'stim_radius': "Stimulation radius ($\mu m$)",
+    'glomerulus cells': "Glom",
+    'glomerulus': "Glom",
+    'granule cells': "GrC",
+    'granule': "GrC",
+    'dcn cells': "DCNC",
+    'dcn': "DCNC",
+    'golgi cells': "GoC",
+    'golgi': "GoC",
+    'purkinje cells': "PC",
+    'purkinje': "PC",
+    'stellate cells': "SC",
+    'stellate': "SC",
+    'basket cells': "BC",
+    'basket': "BC",
+    'max_spikes_in_a_tick': "Peak # of MC packets",
+    'dumped_from_a_link': "Dropped from link",
+    'send_multicast_packets': "MC packets sent",
+    'max_dmas_in_a_tick': "Peak # of DMAs",
+    'max_pipeline_restarts': "Peak # of pipeline restarts",
+    'router_provenance': "Router",
+    # Connection names
+    'aa_goc': "aa-GoC",
+    'aa_pc': "aa-PC",
+    'bc_pc': "BC-PC",
+    'gj_bc': "BC-BC",
+    'gj_goc': "GoC-GoC",
+    'gj_sc': "SC-SC",
+    'glom_dcn': "Glom-DCNC",
+    'glom_goc': "Glom-GoC",
+    'glom_grc': "Glom-GrC",
+    'goc_grc': "GoC-GrC",
+    'pc_dcn': "PC-DCNC",
+    'pf_bc': "pf-BC",
+    'pf_goc': "pf-GoC",
+    'pf_pc': "pf-PC",
+    'pf_sc': "pf-SC",
+    'sc_pc': "SC-PC",
+    # iCub VOR-related
+    'mossy_fibers': "MF",
+    'vn': "VN",
+    'climbing_fibers': "CF",
+    'mf_grc': "MF-GrC",
+    'pc_vn': "PC-VN",
+    'mf_vn': "MF-VN",
+    'cf_pc': "CF-PC",
+    'mf_goc': "MF-GoC",
+}
+
+
+def capitalise(name):
+    return string.capwords(
+        " ".join(
+            str.split(name, "_")
+        ))
+
+
+def use_display_name(name):
+    name = name.lower()
+    return COMMON_DISPLAY_NAMES[name] \
+        if name in COMMON_DISPLAY_NAMES.keys() \
+        else capitalise(name)
 
 
 def get_plot_order(for_keys):
@@ -290,3 +358,86 @@ def save_figure(plt, name, extensions=(".png",), **kwargs):
     for ext in extensions:
         write_short_msg("Plotting", name + ext)
         plt.savefig(name + ext, **kwargs)
+
+
+def sensorial_activity(head_pos, head_vel):
+    # Head position and velocity seem to be retrieve from a look-up table then updated
+    # single point over time
+    # head_pos = _head_pos[pt]
+    # head_vel = _head_vel[pt]
+
+    head_pos = ((head_pos + 0.8) / 1.6)
+    head_vel = ((head_vel + 0.8 * 2 * np.pi) / (1.6 * 2 * np.pi))
+
+    if head_pos > 1.0:
+        head_pos = 1.0
+    elif head_pos < 0.0:
+        head_pos = 0.0
+    if head_vel > 1.0:
+        head_vel = 1.0
+    elif head_vel < 0.0:
+        head_vel = 0.0
+
+    min_rate = 0.0
+    max_rate = 600.0
+    sigma = 0.02
+    MF_pos_activity = np.zeros((50))
+    MF_vel_activity = np.zeros((50))
+
+    # generate gaussian distributions around the neuron tuned to a given sensorial activity
+    for i in range(50):
+        mean = float(i) / 50.0 + 0.01
+        gaussian = np.exp(-((head_pos - mean) * (head_pos - mean)) / (2.0 * sigma * sigma))
+        MF_pos_activity[i] = min_rate + gaussian * (max_rate - min_rate)
+
+    for i in range(50):
+        mean = float(i) / 50.0 + 0.01
+        gaussian = np.exp(-((head_vel - mean) * (head_vel - mean)) / (2.0 * sigma * sigma))
+        MF_vel_activity[i] = min_rate + gaussian * (max_rate - min_rate)
+
+    sa_mean_freq = np.concatenate((MF_pos_activity, MF_vel_activity))
+    out = [sa_mean_freq, head_pos, head_vel]
+    return out
+
+
+# Error Activity: error from eye and head encoders
+def error_activity(error_, low_rate, high_rate):
+    #     min_rate = 1.0
+    #     max_rate = 25.0
+    #
+    #     low_neuron_ID_threshold = abs(error_) * 100.0
+    #     up_neuron_ID_threshold = low_neuron_ID_threshold - 100.0
+    IO_agonist = np.zeros((100))
+    IO_antagonist = np.zeros((100))
+    #
+    #     rate = []
+    #     for i in range (100):
+    #         if(i < up_neuron_ID_threshold):
+    #             rate.append(max_rate)
+    #         elif(i<low_neuron_ID_threshold):
+    #             aux_rate=max_rate - (max_rate-min_rate)*((i - up_neuron_ID_threshold)/(low_neuron_ID_threshold - up_neuron_ID_threshold))
+    #             rate.append(aux_rate)
+    #         else:
+    #             rate.append(min_rate)
+    #
+    #     if error_>=0.0:
+    #         IO_agonist[0:100]=min_rate
+    #         IO_antagonist=rate
+    #     else:
+    #         IO_antagonist[0:100]=min_rate
+    #         IO_agonist=rate
+    IO_agonist[:] = high_rate
+    IO_antagonist[:] = low_rate
+
+    ea_rate = np.concatenate((IO_agonist, IO_antagonist))
+
+    return ea_rate
+
+
+def process_VN_spiketrains(VN_spikes, t_start):
+    total_spikes = 0
+    for spiketrain in VN_spikes.segments[0].spiketrains:
+        s = spiketrain.as_array()[np.where(spiketrain.as_array() >= t_start)[0]]
+        total_spikes += len(s)
+
+    return total_spikes
