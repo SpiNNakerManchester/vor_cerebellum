@@ -7,7 +7,7 @@ from pyNN.random import RandomDistribution, NumpyRNG
 import traceback
 import neo
 # general parameters
-from vor_cerebellum.parameters import (L_RATE, H_RATE, rbls, neuron_params)
+from vor_cerebellum.parameters import (CONNECTIVITY_MAP, rbls, neuron_params)
 # MF-VN params
 from vor_cerebellum.parameters import (mfvn_min_weight, mfvn_max_weight,
                                        mfvn_initial_weight,
@@ -96,6 +96,7 @@ weight_dist_pfpc = RandomDistribution('uniform',
                                       rng=NumpyRNG(seed=24534))
 
 global_n_neurons_per_core = 50
+ss_neurons_per_core = 25
 per_pop_neurons_per_core_constraint = {
     'mossy_fibres': global_n_neurons_per_core,
     'granule': global_n_neurons_per_core,
@@ -106,11 +107,11 @@ per_pop_neurons_per_core_constraint = {
 }
 
 sim.setup(timestep=1., min_delay=1, max_delay=15)
-sim.set_number_of_neurons_per_core(sim.SpikeSourcePoisson, global_n_neurons_per_core)
-sim.set_number_of_neurons_per_core(sim.SpikeSourceArray, global_n_neurons_per_core)
+sim.set_number_of_neurons_per_core(sim.SpikeSourcePoisson, ss_neurons_per_core)
+sim.set_number_of_neurons_per_core(sim.SpikeSourceArray, ss_neurons_per_core)
 sim.set_number_of_neurons_per_core(sim.IF_cond_exp, global_n_neurons_per_core)
 sim.set_number_of_neurons_per_core(sim.extra_models.IFCondExpCerebellum, global_n_neurons_per_core)
-sim.set_number_of_neurons_per_core(sim.extra_models.SpikeSourcePoissonVariable, 25)
+sim.set_number_of_neurons_per_core(sim.extra_models.SpikeSourcePoissonVariable, ss_neurons_per_core)
 
 # Sensorial Activity: input activity from vestibulus (will come from the head IMU, now it is a test bench)
 # We simulate the output of the head encoders with a sinusoidal function. Each "sensorial activity" value is derived from the
@@ -382,9 +383,15 @@ print("=" * 80)
 print("Running simulation for", runtime)
 all_spikes_first_trial = {}
 # Record simulation start time (wall clock)
+current_error = None
 sim_start_time = plt.datetime.datetime.now()
-
-sim.run(runtime)
+# Run the simulation
+try:
+    sim.run(runtime)
+except Exception as e:
+    print("An exception occurred during execution!")
+    traceback.print_exc()
+    current_error = e
 
 end_time = plt.datetime.datetime.now()
 total_time = end_time - start_time
@@ -470,6 +477,51 @@ for pop, potential_neo_block in all_spikes.items():
         # make a copy of the spikes dict
         neo_all_spikes[pop] = potential_neo_block
         all_spikes[pop] = convert_spikes(potential_neo_block)
+
+remapped_vn_spikes = remap_odd_even(all_spikes['vn'], all_neurons['vn'])
+remapped_cf_spikes = remap_second_half_descending(all_spikes['climbing_fibres'], all_neurons['climbing_fibres'])
+
+simulation_parameters = {
+    'runtime': runtime,
+    'error_window_size': sample_time,
+    'vn_spikes': remapped_vn_spikes,
+    'cf_spikes': remapped_cf_spikes,
+    'perfect_eye_pos': perfect_eye_pos,
+    'perfect_eye_vel': perfect_eye_vel,
+    'vn_size': all_neurons['vn'],
+    'cf_size': all_neurons['climbing_fibres'],
+    'gain': gain,
+    "git_hash": retrieve_git_commit(),
+    "run_end_time": end_time.strftime("%H:%M:%S_%d/%m/%Y"),
+    "wall_clock_script_run_time": str(total_time),
+    "wall_clock_sim_run_time": str(sim_total_time),
+    "n_neurons_per_core": global_n_neurons_per_core,
+    "ss_neurons_per_core": ss_neurons_per_core,
+    "rbls": rbls,
+}
+
+# Save results
+filename = "cerebellum_and_env_test_results"
+
+if current_error:
+    filename = "error_" + filename
+
+
+# Save results to file in [by default] the `results/' directory
+results_file = os.path.join(result_dir, filename)
+np.savez_compressed(results_file,
+                    simulation_parameters=simulation_parameters,
+                    all_spikes=all_spikes,
+                    other_recordings=other_recordings,
+                    all_neurons=all_neurons,
+                    final_connectivity=final_connectivity,
+                    initial_connectivity=initial_connectivity,
+                    simtime=runtime,
+                    conn_params=CONNECTIVITY_MAP,
+                    cell_params=neuron_params,
+                    per_pop_neurons_per_core_constraint=per_pop_neurons_per_core_constraint,
+                    )
+
 
 # Report useful parameters
 print("=" * 80)
@@ -604,22 +656,16 @@ plt.title("vn_transfer_function")
 save_figure(plt, os.path.join(fig_folder, "VN_transfer_func" + suffix),
             extensions=['.png', ])
 
-
-remapped_vn_spikes = remap_odd_even(all_spikes['vn'], all_neurons['vn'])
-remapped_cf_spikes = remap_second_half_descending(all_spikes['climbing_fibres'], all_neurons['climbing_fibres'])
-
-simulation_parameters = {
-    'runtime': runtime,
-    'error_window_size': sample_time,
-    'vn_spikes': remapped_vn_spikes,
-    'cf_spikes': remapped_cf_spikes,
-    'perfect_eye_pos': perfect_eye_pos,
-    'perfect_eye_vel': perfect_eye_vel,
-    'vn_size': all_neurons['vn'],
-    'cf_size': all_neurons['climbing_fibres'],
-    'gain': gain
-}
-
 # plot the data from the ICubVorEnv pop
 plot_results(results_dict=results, simulation_parameters=simulation_parameters,
-             name="figures/cerebellum_icub_test")
+             name="figures/cerebellum_icub_first_10k", xlim=[0, 10000])
+
+plot_results(results_dict=results, simulation_parameters=simulation_parameters,
+             name="figures/cerebellum_icub_last_10k", xlim=[runtime-10000, runtime])
+
+
+# Report time taken
+print("Results stored in  -- " + filename)
+
+# Report time taken
+print("Total time elapsed -- " + str(total_time))
