@@ -11,7 +11,7 @@ H_RATE = 20
 rbls = {
     'mossy_fibres': None,
     'granule': [6, 6],
-    'golgi': [6, 6],
+    'golgi': [8, 8],
     'purkinje': [6, 6],
     'vn': [6, 6],
     'climbing_fibres': None,
@@ -27,17 +27,17 @@ neuron_params = {
 
 # PF-PC learning parameters
 pfpc_min_weight = 0
-pfpc_max_weight = 0.01
-pfpc_initial_weight = 0.005
-pfpc_ltp_constant = 0.0005
+pfpc_max_weight = 0.001
+pfpc_initial_weight = 0.0005
+pfpc_ltp_constant = 0.0001
 pfpc_t_peak = 100  # ms
 pfpc_plasticity_delay = 4  # ms
 
 # MF-VN learning parameters
 mfvn_min_weight = 0
-mfvn_max_weight = 0.01
-mfvn_initial_weight = 0.001
-mfvn_ltp_constant = 0.001
+mfvn_max_weight = 0.001
+mfvn_initial_weight = 0.0001
+mfvn_ltp_constant = 0.00005
 mfvn_beta = 11
 mfvn_sigma = 201
 mfvn_plasticity_delay = 4  # ms
@@ -91,14 +91,14 @@ CONNECTIVITY_MAP = {
     'goc_grc': {
         'pre': 'golgi',
         'post': 'granule',
-        'weight': 0.002,  # uS
+        'weight': -0.002,  # uS
         'delay': [1.0, 10.0],  # ms
     },
 
     'pc_vn': {
         'pre': 'purkinje',
         'post': 'vn',
-        'weight': 0.01,  # uS
+        'weight': -0.01,  # uS
         'delay': [1.0, 10.0],  # ms
     },
 
