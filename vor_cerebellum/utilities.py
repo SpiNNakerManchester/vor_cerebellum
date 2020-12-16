@@ -1,9 +1,16 @@
+"""
+Utilities mostly taken from https://github.com/spinnakermanchester/spinncer
+"""
+
 import numpy as np
 import pylab as plt
 import matplotlib as mlib
 import copy
 import os
 import string
+
+from elephant.spike_train_generation import homogeneous_poisson_process
+import quantities as pq
 
 # ensure we use viridis as the default cmap
 plt.viridis()
@@ -22,6 +29,11 @@ fig_folder = "figures/"
 # Check if the folders exist
 if not os.path.isdir(fig_folder) and not os.path.exists(fig_folder):
     os.mkdir(fig_folder)
+
+result_dir = "results/"
+# Check if the results folder exist
+if not os.path.isdir(result_dir) and not os.path.exists(result_dir):
+    os.mkdir(result_dir)
 
 PREFFERED_ORDER = [
     'mossy_fibres',
@@ -227,7 +239,7 @@ def highlight_area(ax, runtime, start_nid, stop_nid):
     )
 
 
-def plot_results(results_dict, simulation_parameters, name):
+def plot_results(results_dict, simulation_parameters, name, xlim=None):
     # unpacking results
     errors = results_dict['errors']
     l_counts = results_dict['l_counts']
@@ -246,7 +258,7 @@ def plot_results(results_dict, simulation_parameters, name):
     cf_size = simulation_parameters['cf_size']
 
     # plot the data from the ICubVorEnv pop
-    x_plot = [(n) for n in range(0, runtime, error_window_size)]
+    x_plot = np.array([(n) for n in range(0, runtime, error_window_size)])
     fig = plt.figure(figsize=(15, 20), dpi=400)
     # Spike raster plot
     ax = plt.subplot(5, 1, 1)
@@ -259,15 +271,20 @@ def plot_results(results_dict, simulation_parameters, name):
     plt.scatter(
         vn_spikes[first_half_filter, 1], vn_spikes[first_half_filter, 0],
         s=1, color=viridis_cmap(.25))
-
-    plt.xlim([0, runtime])
+    if xlim:
+        plt.xlim(xlim)
+    else:
+        plt.xlim([0, runtime])
     plt.ylim([-0.1, vn_size + 0.1])
     # L/R counts
     plt.subplot(5, 1, 2)
     plt.plot(x_plot, l_counts, 'o', color=viridis_cmap(.25), label="l_counts")
     plt.plot(x_plot, r_counts, 'o', color=viridis_cmap(.75), label="r_counts")
     plt.legend(loc="best")
-    plt.xlim([0, runtime])
+    if xlim:
+        plt.xlim(xlim)
+    else:
+        plt.xlim([0, runtime])
     # Positions and velocities
     plt.subplot(5, 1, 3)
     plt.plot(x_plot, rec_eye_pos, label="rec. eye position")
@@ -275,7 +292,10 @@ def plot_results(results_dict, simulation_parameters, name):
     plt.plot(np.tile(perfect_eye_pos, runtime // 1000), label="eye position", ls=':')
     plt.plot(np.tile(perfect_eye_vel, runtime // 1000), label="eye velocity", ls=':')
     plt.legend(loc="best")
-    plt.xlim([0, runtime])
+    if xlim:
+        plt.xlim(xlim)
+    else:
+        plt.xlim([0, runtime])
     # Errors
     plt.subplot(5, 1, 4)
     plt.plot(x_plot, errors, label="recorded error")
@@ -290,7 +310,10 @@ def plot_results(results_dict, simulation_parameters, name):
     plt.plot(x_plot, eye_vel_diff,
              label="eye velocity diff")
     plt.legend(loc="best")
-    plt.xlim([0, runtime])
+    if xlim:
+        plt.xlim(xlim)
+    else:
+        plt.xlim([0, runtime])
     # Error spikes
     ax2 = plt.subplot(5, 1, 5)
     highlight_area(ax2, runtime, cf_size // 2, cf_size)
@@ -302,8 +325,10 @@ def plot_results(results_dict, simulation_parameters, name):
     plt.scatter(
         cf_spikes[first_half_filter, 1], cf_spikes[first_half_filter, 0],
         s=1, color=viridis_cmap(.25))
-    # plt.legend(loc="best")
-    plt.xlim([0, runtime])
+    if xlim:
+        plt.xlim(xlim)
+    else:
+        plt.xlim([0, runtime])
     plt.ylim([-0.1, cf_size + 0.1])
     plt.xlabel("Time (ms)")
     save_figure(plt, name, extensions=[".png", ])
@@ -441,3 +466,61 @@ def process_VN_spiketrains(VN_spikes, t_start):
         total_spikes += len(s)
 
     return total_spikes
+
+
+def retrieve_git_commit():
+    """
+    See https://github.com/spinnakermanchester/spinncer
+    :return:
+    """
+    import subprocess
+    from subprocess import PIPE
+    bash_command = "git rev-parse HEAD"
+
+    try:
+        # We have to use `stdout=PIPE, stderr=PIPE` instead of `text=True`
+        # when using Python 3.6 and earlier. Python 3.7+ will have these QOL
+        # improvements
+        proc = subprocess.run(bash_command.split(),
+                              stdout=PIPE, stderr=PIPE, shell=False)
+        return proc.stdout
+    except subprocess.CalledProcessError as e:
+        print("Failed to retrieve git commit HASH-", str(e))
+        return "CalledProcessError"
+    except Exception as e:
+        print("Failed to retrieve git commit HASH more seriously-", str(e))
+        return "GeneralError"
+
+
+def create_poisson_spikes(n_inputs, rates, starts, durations):
+    spike_times = [[] for _ in range(n_inputs)]
+    for i, rate, start, duration in zip(range(n_inputs), rates, starts, durations):
+        curr_spikes = []
+        for r, s, d in zip(rate, start, duration):
+            curr_spikes.append(homogeneous_poisson_process(
+                rate=r * pq.Hz,
+                t_start=s * pq.ms,
+                t_stop=(s + d) * pq.ms,
+                as_array=True))
+        spike_times[i] = np.concatenate(curr_spikes)
+    return spike_times
+
+
+def floor_spike_time(times, dt=0.1 * pq.ms, t_start=0 * pq.ms, t_stop=1000.0 * pq.ms):
+    bins = np.arange(t_start, t_stop + dt, dt)
+    count, bin_edges = np.histogram(times, bins=bins)
+    present_times_filter = count > 0
+    selected_spike_times = (bin_edges[:-1])[present_times_filter]
+    # Allow for multiple spikes in a timestep if that's how spike times get rounded
+    rounded_spike_times = np.repeat(selected_spike_times, repeats=count[present_times_filter])
+    # Check that there are the same number of spikes out as spikes in
+    assert (len(rounded_spike_times) == len(times))
+    return rounded_spike_times
+
+
+def ff_1_to_1_odd_even_mapping(no_nids):
+    sources = np.arange(no_nids)
+    targets = np.ones(no_nids) * np.nan
+    targets[:no_nids // 2] = sources[:no_nids // 2] * 2
+    targets[no_nids // 2:] = ((sources[no_nids // 2:] - no_nids // 2) * 2) + 1
+    return np.vstack((sources, targets[::-1]))
