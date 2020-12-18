@@ -38,8 +38,9 @@ output_pop = p.Population(output_size, p.SpikeSourcePoisson(rate=0))
 
 # Instantiate venv
 icub_vor_env_model = gym.ICubVorEnv(
-    head_pos, head_vel, perfect_eye_vel, perfect_eye_pos, error_window_size,
-    output_size)
+    head_pos=head_pos, head_vel=head_vel, perfect_eye_pos=perfect_eye_pos, perfect_eye_vel=perfect_eye_vel,
+    error_window_size=error_window_size,
+    output_size=output_size)
 icub_vor_env_pop = p.Population(ICUB_VOR_VENV_POP_SIZE, icub_vor_env_model)
 
 # Set recording for input and output pop (env pop records by default)
