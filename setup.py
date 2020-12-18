@@ -8,7 +8,8 @@ install_requires = [
     'brian2',
     'quantities==0.12.4',
     'elephant==0.7.0',
-    'neo==0.8.0'
+    'neo==0.8.0',
+    'argparse',
 ]
 
 setup(

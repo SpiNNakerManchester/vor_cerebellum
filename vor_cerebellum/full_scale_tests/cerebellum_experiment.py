@@ -21,19 +21,21 @@ from vor_cerebellum.utilities import *
 # Imports for SpiNNGym env
 import spinn_gym as gym
 from spinn_front_end_common.utilities.globals_variables import get_simulator
+from vor_cerebellum.vor_argparser import *
 
 # Record SCRIPT start time (wall clock)
 start_time = plt.datetime.datetime.now()
 
 # Starting to record additional parameters
 
-USE_MOTION_TARGET = False
+USE_MOTION_TARGET = args.target_reaching  # default false
 
 # cerebellum test bench
-runtime = 200000  # 100000
-single_runtime = 10000
-sample_time = 10
-repeats = 1
+runtime = args.simtime  # default=10k ms
+suffix = args.suffix
+
+single_runtime = args.single_simtime  # default=10k ms
+sample_time = args.error_window_size  # default 10 ms
 
 # SpiNNGym settings
 gain = 20.0
@@ -359,8 +361,12 @@ if USE_MOTION_TARGET:
     perfect_eye_vel = head_vel
 
 icub_vor_env_model = gym.ICubVorEnv(
-    head_pos, head_vel, perfect_eye_vel, perfect_eye_pos, sample_time,
-    num_CF_neurons, gain=gain)
+    head_pos=head_pos, head_vel=head_vel, perfect_eye_pos=perfect_eye_pos, perfect_eye_vel=perfect_eye_vel,
+    error_window_size=sample_time,
+    low_error_rate=args.f_base,
+    high_error_rate=args.f_peak,
+    wta_decision=args.wta_decision,
+    output_size=num_CF_neurons, gain=gain)
 icub_vor_env_pop = sim.Population(ICUB_VOR_VENV_POP_SIZE, icub_vor_env_model)
 
 # Input -> ICubVorEnv projection
@@ -430,7 +436,6 @@ try:
             # This simulator might not support the way this is done
             final_connectivity = []
             traceback.print_exc()
-        icub_snapshots.append(retrieve_and_package_results(icub_vor_env_pop, simulator))
 except Exception as e:
     print("An exception occurred during execution!")
     traceback.print_exc()
@@ -474,9 +479,14 @@ for label, pop in all_populations.items():
     other_recordings[label]['v'] = np.array(
         pop.get_data(['v']).segments[0].filter(name='v'))[0].T
 
+    other_recordings[label]['packets'] = np.array(
+        pop.get_data(['packets-per-timestep']).segments[0].filter(
+            name='packets-per-timestep'))[0].T
+
     neo_all_recordings[label] = pop.get_data('all')
 # Get the data from the ICubVorEnv pop
 results = retrieve_and_package_results(icub_vor_env_pop, simulator)
+icub_snapshots.append(results)
 
 sim.end()
 print("job done")
@@ -520,7 +530,14 @@ simulation_parameters = {
 }
 
 # Save results
-filename = "full_cerebellum_test_results"
+if args.suffix:
+    suffix = args.suffix
+else:
+    suffix = end_time.strftime("%H%M%S_%d%m%Y")
+if args.filename:
+    filename = args.filename
+else:
+    filename = "full_cerebellum_test" + "_" + str(suffix)
 
 if current_error:
     filename = "error_" + filename
@@ -598,8 +615,6 @@ for key in final_connectivity:
     except:
         print(key)
         traceback.print_exc()
-
-suffix = "_full_scale"
 
 print("Plotting spiking raster plot for all populations")
 f, axes = plt.subplots(len(all_spikes.keys()), 1,
