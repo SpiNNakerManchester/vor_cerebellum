@@ -40,6 +40,8 @@ output_pop = p.Population(output_size, p.SpikeSourcePoisson(rate=0))
 icub_vor_env_model = gym.ICubVorEnv(
     head_pos=head_pos, head_vel=head_vel, perfect_eye_pos=perfect_eye_pos, perfect_eye_vel=perfect_eye_vel,
     error_window_size=error_window_size,
+    low_error_rate=1.,
+    high_error_rate=30.,
     output_size=output_size)
 icub_vor_env_pop = p.Population(ICUB_VOR_VENV_POP_SIZE, icub_vor_env_model)
 
