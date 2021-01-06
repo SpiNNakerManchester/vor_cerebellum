@@ -2,10 +2,12 @@ import argparse
 
 DEFAULT_FIGURE_DIR = 'figures/'
 DEFAULT_RESULT_DIR = 'results/'
-DEFAULT_SIMTIME = 10000  # ms
+DEFAULT_SIMTIME = 100000  # ms
 DEFAULT_SINGLE_SIMTIME = 10000  # ms
 DEFAULT_TIMESTEP = 1.0  # ms
 DEFAULT_ERROR_WINDOW_SIZE = 10  # ms
+DEFAULT_GAIN = 20
+DEFAULT_MOVEMENT_SLOWDOWN_FACTOR = 1
 
 # rates used by cf
 DEFAULT_BACKGROUND_RATE = 2.  # Hz
@@ -26,15 +28,25 @@ parser = argparse.ArgumentParser(
                 'using sPyNNaker on SpiNNaker or using NEST on (H)PC.',
     formatter_class=argparse.RawTextHelpFormatter)
 
-parser.add_argument('--simtime', type=float,
+parser.add_argument('--simtime', type=int,
                     help="total simulation time (in ms) "
                          "-- default {} ms".format(DEFAULT_SINGLE_SIMTIME),
                     default=DEFAULT_SINGLE_SIMTIME)
 
-parser.add_argument('--single_simtime', type=float,
+parser.add_argument('--gain', type=float,
+                    help="amplification to contribution of a single spike to eye movement "
+                         "-- default {} ms".format(DEFAULT_GAIN),
+                    default=DEFAULT_GAIN)
+
+parser.add_argument('--slowdown_factor', type=int,
+                    help="slowdown factor for head movement "
+                         "-- default {} ms".format(DEFAULT_MOVEMENT_SLOWDOWN_FACTOR),
+                    default=DEFAULT_MOVEMENT_SLOWDOWN_FACTOR)
+
+parser.add_argument('--single_simtime', type=int,
                     help="single simulation time (in ms) "
-                         "-- default {} ms".format(DEFAULT_SIMTIME),
-                    default=DEFAULT_SIMTIME)
+                         "-- default {} ms".format(DEFAULT_SINGLE_SIMTIME),
+                    default=DEFAULT_SINGLE_SIMTIME)
 
 parser.add_argument('--error_window_size', type=float,
                     help="evidence accumulation window for spinngym env "
@@ -115,6 +127,7 @@ parser.add_argument('--suffix', type=str,
 
 args = parser.parse_args()
 from pprint import pprint as pp
+
 print("=" * 80)
 print("Args")
 pp(vars(args))

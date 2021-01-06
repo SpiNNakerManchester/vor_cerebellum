@@ -206,10 +206,21 @@ def get_eye_vel(icub_vor_env_pop, simulator):
     return eye_velocities.tolist()
 
 
-def generate_head_position_and_velocity(time, dt=0.001):
+def generate_head_position_and_velocity(time, dt=0.001, slowdown=1):
     i = np.arange(0, time, dt)
     pos = -np.sin(i * 2 * np.pi)
     vel = -np.cos(i * 2 * np.pi)
+
+    # repeat individual positions and velocities to slow down movement
+    # DOES NOT WORK FOR VELOCITY
+    if slowdown > 1:
+        pos = np.repeat(pos, slowdown)
+    temp_pos = np.concatenate(([pos[-1]], pos))
+    vel = np.diff(temp_pos) / POS_TO_VEL
+
+    # if slowdown == 1:
+    #     assert np.all(np.isclose(vel, -np.cos(i * 2 * np.pi)), 0.001)
+
     return pos, vel
 
 
@@ -286,11 +297,15 @@ def plot_results(results_dict, simulation_parameters, name, xlim=None):
     else:
         plt.xlim([0, runtime])
     # Positions and velocities
+
+    len_recs = len(rec_eye_pos.ravel())
     plt.subplot(5, 1, 3)
     plt.plot(x_plot, rec_eye_pos, label="rec. eye position")
     plt.plot(x_plot, rec_eye_vel, label="rec. eye velocity")
-    plt.plot(np.tile(perfect_eye_pos, runtime // 1000), label="eye position", ls=':')
-    plt.plot(np.tile(perfect_eye_vel, runtime // 1000), label="eye velocity", ls=':')
+    plt.plot(x_plot, np.tile(perfect_eye_pos[::error_window_size], runtime // 1000)[:len_recs],
+             label="eye position", ls=':')
+    plt.plot(x_plot, np.tile(perfect_eye_vel[::error_window_size], runtime // 1000)[:len_recs],
+             label="eye velocity", ls=':')
     plt.legend(loc="best")
     if xlim:
         plt.xlim(xlim)
@@ -299,9 +314,8 @@ def plot_results(results_dict, simulation_parameters, name, xlim=None):
     # Errors
     plt.subplot(5, 1, 4)
     plt.plot(x_plot, errors, label="recorded error")
-
-    eye_pos_diff = np.tile(perfect_eye_pos[::error_window_size], runtime // 1000) - rec_eye_pos.ravel()
-    eye_vel_diff = np.tile(perfect_eye_vel[::error_window_size], runtime // 1000) - rec_eye_vel.ravel()
+    eye_pos_diff = np.tile(perfect_eye_pos[::error_window_size], runtime // 1000)[:len_recs] - rec_eye_pos.ravel()
+    eye_vel_diff = np.tile(perfect_eye_vel[::error_window_size], runtime // 1000)[:len_recs] - rec_eye_vel.ravel()
     reconstructed_error = eye_pos_diff + eye_vel_diff
 
     plt.plot(x_plot, reconstructed_error, color='k', ls=":", label="reconstructed error")

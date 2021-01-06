@@ -10,11 +10,14 @@ input_size = 200  # neurons
 output_size = 200  # neurons
 gain = 20.0
 
-head_pos, head_vel = generate_head_position_and_velocity(1)
+slowdown_factor = 2
+midway_point = 500 * slowdown_factor
+
+head_pos, head_vel = generate_head_position_and_velocity(1, slowdown=slowdown_factor)
 
 # perfect eye positions and velocities are exactly out of phase with head
-perfect_eye_pos = np.concatenate((head_pos[500:], head_pos[:500]))
-perfect_eye_vel = np.concatenate((head_vel[500:], head_vel[:500]))
+perfect_eye_pos = np.concatenate((head_pos[midway_point:], head_pos[:midway_point]))
+perfect_eye_vel = np.concatenate((head_vel[midway_point:], head_vel[:midway_point]))
 
 input_spike_times = [[] for _ in range(input_size)]
 # the constant number (0.000031) is the effect of a single spike on the head position
@@ -27,15 +30,16 @@ sub_eye_pos = np.diff(np.concatenate((perfect_eye_pos, [perfect_eye_pos[0]])))
 no_required_spikes_per_chunk = np.ceil(np.abs(sub_head_pos[0]) / head_movement_per_spike)
 
 # build ICubVorEnv model
-error_window_size = 10  # ms
+error_window_size = 10   # ms
+adjusted_window = 1000 * slowdown_factor
 npc_limit = 200 # 25
 no_input_cores = int(input_size / npc_limit)
 input_spike_times = [[] for _ in range(input_size)]
 for ts in range(runtime - 1):
     # if 1000 <= ts < 2000:
     #     continue
-    sgn = np.sign(sub_eye_pos[ts % 1000])
-    spikes_during_chunk = np.ceil(np.abs(sub_eye_pos[ts % 1000]) / head_movement_per_spike)
+    sgn = np.sign(sub_eye_pos[ts % adjusted_window])
+    spikes_during_chunk = np.ceil(np.abs(sub_eye_pos[ts % adjusted_window]) / head_movement_per_spike)
     for i in range(int(spikes_during_chunk)):
         x = int(sgn <= 0)
         input_spike_times[(i % no_input_cores) * npc_limit + x].append(ts)

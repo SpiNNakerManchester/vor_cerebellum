@@ -38,7 +38,7 @@ single_runtime = args.single_simtime  # default=10k ms
 sample_time = args.error_window_size  # default 10 ms
 
 # SpiNNGym settings
-gain = 20.0
+gain = args.gain
 
 # Synapse parameters
 gc_pc_weights = 0.005
@@ -151,9 +151,11 @@ normalised_head_vel = (np.asarray(_head_vel) + 0.8 * 2 * np.pi) / (1.6 * 2 * np.
 all_mf_rates = np.ones((num_MF_neurons, runtime // sample_time)) * np.nan
 all_mf_starts = np.repeat([np.arange(runtime // sample_time) * sample_time], num_MF_neurons, axis=0)
 all_mf_durations = np.ones((num_MF_neurons, runtime // sample_time)) * sample_time
-for i in range(runtime // sample_time):
-    current_rates = sensorial_activity(_head_pos[i * sample_time], _head_vel[i * sample_time])[0]
-    all_mf_rates[:, i] = current_rates
+for i in np.arange(runtime // (sample_time * args.slowdown_factor))*args.slowdown_factor:
+    sample_no = i * sample_time // args.slowdown_factor
+    current_rates = sensorial_activity(_head_pos[sample_no], _head_vel[sample_no])[0]
+    for j in range(args.slowdown_factor):
+        all_mf_rates[:, i + j] = current_rates
 
 MF_population = sim.Population(num_MF_neurons,  # number of sources
                                sim.extra_models.SpikeSourcePoissonVariable,  # source type
@@ -348,11 +350,12 @@ cf_pc_connections = sim.Projection(CF_population,
 all_projections["cf_pc"] = cf_pc_connections
 
 # Instantiate env
-head_pos, head_vel = generate_head_position_and_velocity(1)
+head_pos, head_vel = generate_head_position_and_velocity(1, slowdown=args.slowdown_factor)
+midway_point = 500 * args.slowdown_factor
 
 # perfect eye positions and velocities are exactly out of phase with head
-perfect_eye_pos = np.concatenate((head_pos[500:], head_pos[:500]))
-perfect_eye_vel = np.concatenate((head_vel[500:], head_vel[:500]))
+perfect_eye_pos = np.concatenate((head_pos[midway_point:], head_pos[:midway_point]))
+perfect_eye_vel = np.concatenate((head_vel[midway_point:], head_vel[:midway_point]))
 
 if USE_MOTION_TARGET:
     head_pos[:] = -0.7
@@ -511,6 +514,7 @@ remapped_vn_spikes = remap_odd_even(all_spikes['vn'], all_neurons['vn'])
 remapped_cf_spikes = remap_second_half_descending(all_spikes['climbing_fibres'], all_neurons['climbing_fibres'])
 
 simulation_parameters = {
+    "argparser": vars(args),
     'runtime': runtime,
     'error_window_size': sample_time,
     'vn_spikes': remapped_vn_spikes,
@@ -531,13 +535,13 @@ simulation_parameters = {
 
 # Save results
 if args.suffix:
-    suffix = args.suffix
+    suffix = "_" + args.suffix
 else:
-    suffix = end_time.strftime("%H%M%S_%d%m%Y")
+    suffix = end_time.strftime("_%H%M%S_%d%m%Y")
 if args.filename:
     filename = args.filename
 else:
-    filename = "full_cerebellum_test" + "_" + str(suffix)
+    filename = "full_cerebellum_test" + str(suffix)
 
 if current_error:
     filename = "error_" + filename
