@@ -9,4 +9,5 @@ write_pfpc_lut(spec=None,
                peak_time=t_peak,
                lut_size=256,
                shift=0,
-               time_probe=t_peak)
+               time_probe=t_peak,
+               kernel_scaling=0.8)

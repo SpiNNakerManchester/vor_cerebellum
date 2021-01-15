@@ -9,4 +9,5 @@ write_mfvn_lut(spec=None,
                beta=beta,
                lut_size=256,
                shift=0,
-               time_probe=22)
+               time_probe=22,
+               kernel_scaling=0.8)
