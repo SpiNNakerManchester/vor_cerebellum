@@ -45,7 +45,7 @@ gain = args.gain
 # Synapse parameters
 gc_pc_weights = 0.005
 mf_vn_weights = 0.0005
-pc_vn_weights = 0.8  # 0.08 also worked for 5x slowdown, 0.01 was the "original"
+pc_vn_weights = 0.005  # 0.08 also worked for 5x slowdown, 0.01 was the "original"
 cf_pc_weights = 0  # 0.005
 mf_gc_weights = 0.5
 go_gc_weights = 0.002
