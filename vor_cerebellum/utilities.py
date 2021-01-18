@@ -537,4 +537,12 @@ def ff_1_to_1_odd_even_mapping(no_nids):
     targets = np.ones(no_nids) * np.nan
     targets[:no_nids // 2] = sources[:no_nids // 2] * 2
     targets[no_nids // 2:] = ((sources[no_nids // 2:] - no_nids // 2) * 2) + 1
-    return np.vstack((sources, targets[::-1]))
+    return np.vstack((sources, targets[::])).T
+
+
+def ff_1_to_1_odd_even_mapping_reversed(no_nids):
+    sources = np.arange(no_nids)
+    targets = np.ones(no_nids) * np.nan
+    targets[:no_nids // 2] = ((sources[no_nids // 2:] - no_nids // 2) * 2) + 1
+    targets[no_nids // 2:] = sources[:no_nids // 2] * 2
+    return np.vstack((sources, targets[::])).T
