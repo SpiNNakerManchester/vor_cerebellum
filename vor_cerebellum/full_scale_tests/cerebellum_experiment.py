@@ -12,11 +12,13 @@ from vor_cerebellum.parameters import (CONNECTIVITY_MAP, rbls, neuron_params)
 from vor_cerebellum.parameters import (mfvn_min_weight, mfvn_max_weight,
                                        mfvn_initial_weight,
                                        mfvn_ltp_constant,
-                                       mfvn_beta, mfvn_sigma)
+                                       mfvn_beta, mfvn_sigma,
+                                       vn_neuron_params, mfvn_ltd_constant)
 # PF-PC params
 from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pfpc_initial_weight,
-                                       pfpc_ltp_constant, pfpc_t_peak)
+                                       pfpc_ltp_constant, pfpc_t_peak,
+                                       pfpc_ltd_constant)
 from vor_cerebellum.utilities import *
 # Imports for SpiNNGym env
 import spinn_gym as gym
@@ -43,8 +45,8 @@ gain = args.gain
 # Synapse parameters
 gc_pc_weights = 0.005
 mf_vn_weights = 0.0005
-pc_vn_weights = 0.01
-cf_pc_weights = 0.0
+pc_vn_weights = 0.8  # 0.08 also worked for 5x slowdown, 0.01 was the "original"
+cf_pc_weights = 0  # 0.005
 mf_gc_weights = 0.5
 go_gc_weights = 0.002
 mf_go_weights = 0.1
@@ -151,7 +153,7 @@ normalised_head_vel = (np.asarray(_head_vel) + 0.8 * 2 * np.pi) / (1.6 * 2 * np.
 all_mf_rates = np.ones((num_MF_neurons, runtime // sample_time)) * np.nan
 all_mf_starts = np.repeat([np.arange(runtime // sample_time) * sample_time], num_MF_neurons, axis=0)
 all_mf_durations = np.ones((num_MF_neurons, runtime // sample_time)) * sample_time
-for i in np.arange(runtime // (sample_time * args.slowdown_factor))*args.slowdown_factor:
+for i in np.arange(runtime // (sample_time * args.slowdown_factor)) * args.slowdown_factor:
     sample_no = i * sample_time // args.slowdown_factor
     current_rates = sensorial_activity(_head_pos[sample_no], _head_vel[sample_no])[0]
     for j in range(args.slowdown_factor):
@@ -170,7 +172,7 @@ MF_population = sim.Population(num_MF_neurons,  # number of sources
 all_populations["mossy_fibres"] = MF_population
 
 # Create GOC population
-GOC_population = sim.Population(num_GOC_neurons, sim.IF_cond_exp(), label='GOCLayer',
+GOC_population = sim.Population(num_GOC_neurons, sim.IF_cond_exp(), label='GoC',
                                 additional_parameters={"rb_left_shifts": rbls['golgi']}
                                 )
 all_populations["golgi"] = GOC_population
@@ -178,21 +180,21 @@ all_populations["golgi"] = GOC_population
 # create PC population
 PC_population = sim.Population(num_PC_neurons,  # number of neurons
                                sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
-                               label="Purkinje Cell",
+                               label="PC",
                                additional_parameters={"rb_left_shifts": rbls['purkinje']}
                                )
 all_populations["purkinje"] = PC_population
 
 # create VN population
 VN_population = sim.Population(num_VN_neurons,  # number of neurons
-                               sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
-                               label="Vestibular Nuclei",
+                               sim.extra_models.IFCondExpCerebellum(**vn_neuron_params),  # Neuron model
+                               label="VN",
                                additional_parameters={"rb_left_shifts": rbls['vn']}
                                )
 all_populations["vn"] = VN_population
 
 # Create GrC population
-GC_population = sim.Population(num_GC_neurons, sim.IF_curr_exp(), label='GCLayer',
+GC_population = sim.Population(num_GC_neurons, sim.IF_curr_exp(), label='GrC',
                                additional_parameters={"rb_left_shifts": rbls['granule']}
                                )
 all_populations["granule"] = GC_population
@@ -201,7 +203,7 @@ all_populations["granule"] = GC_population
 CF_population = sim.Population(num_CF_neurons,  # number of sources
                                sim.SpikeSourcePoisson,  # source type
                                {'rate': 0},  # source spike times
-                               label="CFLayer",
+                               label="CF",
                                additional_parameters={'seed': 24534}
                                )
 all_populations["climbing_fibres"] = CF_population
@@ -216,7 +218,8 @@ mf_go_connections = sim.Projection(MF_population,
                                    sim.OneToOneConnector(),
                                    sim.StaticSynapse(delay=delay_distr,
                                                      weight=mf_go_weights),
-                                   receptor_type='excitatory')
+                                   receptor_type='excitatory',
+                                   label="mf_goc")
 all_projections["mf_goc"] = mf_go_connections
 
 # Create MF-GC and GO-GC connections
@@ -281,24 +284,24 @@ GO_GC_con3 = sim.Projection(GOC_population,
 all_projections["goc_grc_2"] = GO_GC_con3
 
 # Create PC-VN connections
-ff_conn_vn = ff_1_to_1_odd_even_mapping(num_VN_neurons).T
+ff_conn_vn = ff_1_to_1_odd_even_mapping_reversed(num_VN_neurons)
 assert ff_conn_vn.shape[1] == 2
-pc_vn_connections = sim.Projection(PC_population,
-                                   VN_population,
-                                   # sim.OneToOneConnector(),
-                                   sim.FromListConnector(conn_list=ff_conn_vn),
-                                   label='pc_vn',
-                                   # receptor_type='GABA', # Should these be inhibitory?
-                                   synapse_type=sim.StaticSynapse(delay=delay_distr,
-                                                                  weight=pc_vn_weights),
-                                   receptor_type='inhibitory')
-all_projections["pc_vn"] = pc_vn_connections
+ff_pc_vn_connections = sim.Projection(PC_population,
+                                      VN_population,
+                                      # sim.OneToOneConnector(),
+                                      sim.FromListConnector(conn_list=ff_conn_vn),
+                                      label='pc_vn',
+                                      synapse_type=sim.StaticSynapse(delay=delay_distr,
+                                                                     weight=pc_vn_weights),
+                                      receptor_type='inhibitory')
+all_projections["pc_vn"] = ff_pc_vn_connections
 
 # Create MF-VN learning rule - cos
 
 mfvn_plas = sim.STDPMechanism(
     timing_dependence=sim.extra_models.TimingDependenceMFVN(beta=mfvn_beta,
-                                                            sigma=mfvn_sigma),
+                                                            sigma=mfvn_sigma,
+                                                            alpha=mfvn_ltd_constant),
     weight_dependence=sim.extra_models.WeightDependenceMFVN(w_min=mfvn_min_weight,
                                                             w_max=mfvn_max_weight,
                                                             pot_alpha=mfvn_ltp_constant),
@@ -313,18 +316,19 @@ mf_vn_connections = sim.Projection(
 all_projections["mf_vn"] = mf_vn_connections
 
 # Create projection from PC to VN -- replaces "TEACHING SIGNAL"
-pc_vn_connections = sim.Projection(
+teaching_pc_vn_connections = sim.Projection(
     PC_population, VN_population,
     # sim.OneToOneConnector(),
     sim.FromListConnector(conn_list=ff_conn_vn),
     sim.StaticSynapse(weight=0.0, delay=1.0),
     label='pc_vn_teaching',
     receptor_type="excitatory")  # "TEACHING SIGNAL"
-all_projections["pc_vn_teaching"] = pc_vn_connections
+all_projections["pc_vn_teaching"] = teaching_pc_vn_connections
 
 # create PF-PC learning rule - sin
 pfpc_plas = sim.STDPMechanism(
-    timing_dependence=sim.extra_models.TimingDependencePFPC(t_peak=pfpc_t_peak),
+    timing_dependence=sim.extra_models.TimingDependencePFPC(t_peak=pfpc_t_peak,
+                                                            alpha=pfpc_ltd_constant),
     weight_dependence=sim.extra_models.WeightDependencePFPC(w_min=pfpc_min_weight,
                                                             w_max=pfpc_max_weight,
                                                             pot_alpha=pfpc_ltp_constant),
@@ -373,7 +377,8 @@ icub_vor_env_model = gym.ICubVorEnv(
 icub_vor_env_pop = sim.Population(ICUB_VOR_VENV_POP_SIZE, icub_vor_env_model)
 
 # Input -> ICubVorEnv projection
-vn_to_icub = sim.Projection(VN_population, icub_vor_env_pop, sim.AllToAllConnector())
+vn_to_icub = sim.Projection(VN_population, icub_vor_env_pop, sim.AllToAllConnector(),
+                            label="VN-iCub")
 
 # ICubVorEnv -> output, setup live output to the SSP vertex
 sim.external_devices.activate_live_output_to(
@@ -473,10 +478,10 @@ for label, pop in all_populations.items():
     print("Retrieving recordings for ", label, "...")
     other_recordings[label] = {}
 
-    other_recordings[label]['current'] = np.array(
+    other_recordings[label]['gsyn_inh'] = np.array(
         pop.get_data(['gsyn_inh']).filter(name='gsyn_inh'))[0].T
 
-    other_recordings[label]['gsyn'] = np.array(
+    other_recordings[label]['gsyn_exc'] = np.array(
         pop.get_data(['gsyn_exc']).filter(name='gsyn_exc'))[0].T
 
     other_recordings[label]['v'] = np.array(
@@ -539,7 +544,7 @@ if args.suffix:
 else:
     suffix = end_time.strftime("_%H%M%S_%d%m%Y")
 if args.filename:
-    filename = args.filename
+    filename = args.filename + str(suffix)
 else:
     filename = "full_cerebellum_test" + str(suffix)
 
@@ -562,6 +567,11 @@ np.savez_compressed(results_file,
                     per_pop_neurons_per_core_constraint=per_pop_neurons_per_core_constraint,
                     icub_snapshots=icub_snapshots
                     )
+
+fig_folder += filename
+# Check if the folders exist
+if not os.path.isdir(fig_folder) and not os.path.exists(fig_folder):
+    os.mkdir(fig_folder)
 
 # Report useful parameters
 print("=" * 80)
@@ -710,13 +720,13 @@ save_figure(plt, os.path.join(fig_folder, "VN_transfer_func" + suffix),
 
 # plot the data from the ICubVorEnv pop
 plot_results(results_dict=results, simulation_parameters=simulation_parameters,
-             name="figures/cerebellum_icub_first_10k" + suffix, xlim=[0, 10000])
+             name=os.path.join(fig_folder, "cerebellum_icub_first_10k" + suffix), xlim=[0, 10000])
 
 plot_results(results_dict=results, simulation_parameters=simulation_parameters,
-             name="figures/cerebellum_icub_last_10k" + suffix, xlim=[runtime - 10000, runtime])
+             name=os.path.join(fig_folder, "cerebellum_icub_last_10k" + suffix), xlim=[runtime - 10000, runtime])
 
 plot_results(results_dict=results, simulation_parameters=simulation_parameters,
-             name="figures/cerebellum_icub_full" + suffix)
+             name=os.path.join(fig_folder, "cerebellum_icub_full" + suffix))
 
 # Report time taken
 print("Results stored in  -- " + filename)
