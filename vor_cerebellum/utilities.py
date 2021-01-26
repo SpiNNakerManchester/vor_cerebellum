@@ -250,7 +250,7 @@ def highlight_area(ax, runtime, start_nid, stop_nid):
     )
 
 
-def plot_results(results_dict, simulation_parameters, name, xlim=None):
+def plot_results(results_dict, simulation_parameters, name, all_spikes, xlim=None):
     # unpacking results
     errors = results_dict['errors']
     l_counts = results_dict['l_counts']
@@ -263,6 +263,7 @@ def plot_results(results_dict, simulation_parameters, name, xlim=None):
     error_window_size = simulation_parameters['error_window_size']
     vn_spikes = simulation_parameters['vn_spikes']
     cf_spikes = simulation_parameters['cf_spikes']
+    pc_spikes = all_spikes['purkinje']
     perfect_eye_pos = simulation_parameters['perfect_eye_pos']
     perfect_eye_vel = simulation_parameters['perfect_eye_vel']
     vn_size = simulation_parameters['vn_size']
@@ -272,26 +273,28 @@ def plot_results(results_dict, simulation_parameters, name, xlim=None):
     x_plot = np.array([(n) for n in range(0, runtime, error_window_size)])
     fig = plt.figure(figsize=(15, 20), dpi=400)
     # Spike raster plot
-    ax = plt.subplot(5, 1, 1)
+    ax = plt.subplot(6, 1, 1)
     highlight_area(ax, runtime, vn_size // 2, vn_size)
     first_half_filter = vn_spikes[:, 0] < vn_size // 2
     second_half_filter = ~first_half_filter
     plt.scatter(
         vn_spikes[second_half_filter, 1], vn_spikes[second_half_filter, 0],
-        s=1, color=viridis_cmap(.75))
+        s=1, color=viridis_cmap(.75), rasterized=True)
     plt.scatter(
         vn_spikes[first_half_filter, 1], vn_spikes[first_half_filter, 0],
-        s=1, color=viridis_cmap(.25))
+        s=1, color=viridis_cmap(.25), rasterized=True)
+    ax.set_ylabel("VN")
     if xlim:
         plt.xlim(xlim)
     else:
         plt.xlim([0, runtime])
     plt.ylim([-0.1, vn_size + 0.1])
     # L/R counts
-    plt.subplot(5, 1, 2)
-    plt.plot(x_plot, l_counts, 'o', color=viridis_cmap(.25), label="l_counts")
-    plt.plot(x_plot, r_counts, 'o', color=viridis_cmap(.75), label="r_counts")
+    ax2 = plt.subplot(6, 1, 2)
+    plt.plot(x_plot, l_counts, 'o', color=viridis_cmap(.25), label="l_counts", rasterized=True)
+    plt.plot(x_plot, r_counts, 'o', color=viridis_cmap(.75), label="r_counts", rasterized=True)
     plt.legend(loc="best")
+    ax2.set_ylabel("R/L accums.")
     if xlim:
         plt.xlim(xlim)
     else:
@@ -299,53 +302,77 @@ def plot_results(results_dict, simulation_parameters, name, xlim=None):
     # Positions and velocities
 
     len_recs = len(rec_eye_pos.ravel())
-    plt.subplot(5, 1, 3)
+    # Pos and vel
+    ax2 = plt.subplot(6, 1, 3)
     plt.plot(x_plot, rec_eye_pos, label="rec. eye position")
     plt.plot(x_plot, rec_eye_vel, label="rec. eye velocity")
     plt.plot(x_plot, np.tile(perfect_eye_pos[::error_window_size], runtime // 1000)[:len_recs],
-             label="eye position", ls=':')
+             label="eye position", ls=':', rasterized=True)
     plt.plot(x_plot, np.tile(perfect_eye_vel[::error_window_size], runtime // 1000)[:len_recs],
-             label="eye velocity", ls=':')
+             label="eye velocity", ls=':', rasterized=True)
     plt.legend(loc="best")
+    ax2.set_ylabel("Pos. & Vel.")
     if xlim:
         plt.xlim(xlim)
     else:
         plt.xlim([0, runtime])
     # Errors
-    plt.subplot(5, 1, 4)
+    ax2 = plt.subplot(6, 1, 4)
     plt.plot(x_plot, errors, label="recorded error")
     eye_pos_diff = np.tile(perfect_eye_pos[::error_window_size], runtime // 1000)[:len_recs] - rec_eye_pos.ravel()
     eye_vel_diff = np.tile(perfect_eye_vel[::error_window_size], runtime // 1000)[:len_recs] - rec_eye_vel.ravel()
     reconstructed_error = eye_pos_diff + eye_vel_diff
 
-    plt.plot(x_plot, reconstructed_error, color='k', ls=":", label="reconstructed error")
+    #     plt.plot(x_plot, reconstructed_error, color='k', ls=":", label="reconstructed error")
     plt.plot(x_plot, eye_pos_diff,
-             label="eye position diff")
+             label="eye position diff", rasterized=True)
     plt.plot(x_plot, eye_vel_diff,
-             label="eye velocity diff")
+             label="eye velocity diff", rasterized=True)
     plt.legend(loc="best")
+    ax2.set_ylabel("Error")
     if xlim:
         plt.xlim(xlim)
     else:
         plt.xlim([0, runtime])
     # Error spikes
-    ax2 = plt.subplot(5, 1, 5)
+    ax2 = plt.subplot(6, 1, 5)
     highlight_area(ax2, runtime, cf_size // 2, cf_size)
     first_half_filter = cf_spikes[:, 0] < cf_size // 2
     second_half_filter = ~first_half_filter
     plt.scatter(
         cf_spikes[second_half_filter, 1], cf_spikes[second_half_filter, 0],
-        s=1, color=viridis_cmap(.75))
+        s=1, color=viridis_cmap(.75), rasterized=True)
     plt.scatter(
         cf_spikes[first_half_filter, 1], cf_spikes[first_half_filter, 0],
-        s=1, color=viridis_cmap(.25))
+        s=1, color=viridis_cmap(.25), rasterized=True)
+    ax2.set_ylabel("CF")
+
+    if xlim:
+        plt.xlim(xlim)
+    else:
+        plt.xlim([0, runtime])
+
+    # PC spikes
+    ax2 = plt.subplot(6, 1, 6)
+    highlight_area(ax2, runtime, cf_size // 2, cf_size)
+    first_half_filter = pc_spikes[:, 0] < cf_size // 2
+    second_half_filter = ~first_half_filter
+    ax2.scatter(
+        pc_spikes[second_half_filter, 1], pc_spikes[second_half_filter, 0],
+        s=1, color=viridis_cmap(.75), rasterized=True)
+    ax2.scatter(
+        pc_spikes[first_half_filter, 1], pc_spikes[first_half_filter, 0],
+        s=1, color=viridis_cmap(.25), rasterized=True)
+    ax2.set_ylabel("PC")
+
     if xlim:
         plt.xlim(xlim)
     else:
         plt.xlim([0, runtime])
     plt.ylim([-0.1, cf_size + 0.1])
     plt.xlabel("Time (ms)")
-    save_figure(plt, name, extensions=[".png", ])
+    save_figure(plt, name, extensions=[".png", ".pdf", ])
+    plt.show()
     plt.close(fig)
 
 
