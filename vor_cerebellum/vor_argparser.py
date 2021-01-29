@@ -86,7 +86,7 @@ parser.add_argument('--timestep', type=float,
 parser.add_argument('-i', '--input', type=str,
                     help="name of the dataset storing "
                          "initial connectivity for the simulation",
-                    dest='dataset')
+                    dest='path_to_input')
 
 parser.add_argument('-o', '--output', type=str,
                     help="name of the numpy archive (.npz) "
@@ -120,10 +120,56 @@ parser.add_argument('--worst_case_spikes', action="store_true",
                          'process of counting number of afferent '
                          'spikes is performed.')
 
+parser.add_argument('--full_recordings', action="store_true",
+                    help='Enable the recording of v and gsyn, in addition to the default recordings:'
+                         ' spikes and packets per timestep per core.')
+
 parser.add_argument('--suffix', type=str,
                     help="extra string to identify some files"
                          "-- default {}".format(''),
                     default='')
+
+# Learning params
+parser.add_argument('--vn_cm', type=float,
+                    help="CM for the VN population "
+                         "-- default {}".format(None),
+                    default=None)
+
+parser.add_argument('--mfvn_scale', type=float,
+                    help="level of LTD at MF-VN synapses "
+                         "-- default {}".format(None),
+                    default=None)
+
+parser.add_argument('--mfvn_max_weight', type=float,
+                    help="max conductance for MF-VN synapses "
+                         "-- default {}".format(None),
+                    default=None)
+
+parser.add_argument('--pfpc_max_weight', type=float,
+                    help="max conductance for PF-PC synapses "
+                         "-- default {}".format(None),
+                    default=None)
+
+parser.add_argument('--pfpc_scale', type=float,
+                    help="level of LTD at PF-PC synapses "
+                         "-- default {}".format(None),
+                    default=None)
+
+parser.add_argument('--pcvn_weight', type=float,
+                    help="weight of PC-VN synapses "
+                         "-- default {}".format(None),
+                    default=None)
+
+parser.add_argument('--mfvn_ltp_constant', type=float,
+                    help="LTP constant for MF-VN synapses "
+                         "-- default {}".format(None),
+                    default=None)
+
+parser.add_argument('--pfpc_ltp_constant', type=float,
+                    help="LTP constant for PF-PC synapses "
+                         "-- default {}".format(None),
+                    default=None)
+
 
 args = parser.parse_args()
 from pprint import pprint as pp

@@ -8,14 +8,15 @@ import matplotlib as mlib
 import copy
 import os
 import string
+import traceback
 
 from elephant.spike_train_generation import homogeneous_poisson_process
 import quantities as pq
 
+mlib.use('Agg')
 # ensure we use viridis as the default cmap
 plt.viridis()
 
-mlib.use('Agg')
 # ensure we use the same rc parameters for all matplotlib outputs
 mlib.rcParams.update({'font.size': 24})
 mlib.rcParams.update({'errorbar.capsize': 5})
@@ -573,3 +574,91 @@ def ff_1_to_1_odd_even_mapping_reversed(no_nids):
     targets[:no_nids // 2] = ((sources[no_nids // 2:] - no_nids // 2) * 2) + 1
     targets[no_nids // 2:] = sources[:no_nids // 2] * 2
     return np.vstack((sources, targets[::])).T
+
+
+def enable_recordings_for(populations, full_recordings=False):
+    # Records spikes on spikes sources
+    populations["mossy_fibres"].record(['spikes'])
+    populations["climbing_fibres"].record(['spikes'])
+
+    # Record things for LIF populations
+    if full_recordings:
+        # Record everything
+        populations["granule"].record('all')
+        populations["golgi"].record('all')
+        populations["vn"].record('all')
+        populations["purkinje"].record('all')
+    else:
+        # Record just the spikes (and maybe the packets per timestep too
+        populations["granule"].record(['spikes', 'packets-per-timestep'])
+        populations["golgi"].record(['spikes', 'packets-per-timestep'])
+        populations["vn"].record(['spikes', 'packets-per-timestep'])
+        populations["purkinje"].record(['spikes', 'packets-per-timestep'])
+
+
+def take_connectivity_snapshot(all_projections, final_connectivity):
+    # Retrieve final network connectivity
+    try:
+        for label, p in all_projections.items():
+            if p is None:
+                print("Projection", label, "is not implemented!")
+                continue
+            print("Retrieving connectivity for projection ", label, "...")
+            try:
+                conn = \
+                    np.array(p.get(('weight', 'delay'),
+                                   format="list")._get_data_items())
+            except Exception as e:
+                print("Careful! Something happened when retrieving the "
+                      "connectivity:", e, "\nRetrying...")
+                conn = \
+                    np.array(p.get(('weight', 'delay'), format="list"))
+
+            conn = np.array(conn.tolist())
+            final_connectivity[label].append(conn)
+    except:
+        # This simulator might not support the way this is done
+        final_connectivity = []
+        traceback.print_exc()
+
+
+def retrieve_all_spikes(all_populations):
+    all_spikes = {}
+    for label, pop in all_populations.items():
+        if pop is not None:
+            print("Retrieving recordings for ", label, "...")
+            all_spikes[label] = pop.get_data(['spikes'])
+    return all_spikes
+
+
+def retrieve_all_other_recordings(all_populations, full_recordings):
+    neo_all_recordings = {}
+    other_recordings = {}
+    for label, pop in all_populations.items():
+        if label in ["mossy_fibres", "climbing_fibres"]:
+            continue
+        print("Retrieving recordings for ", label, "...")
+        other_recordings[label] = {}
+
+        if full_recordings:
+            other_recordings[label]['gsyn_inh'] = np.array(
+                pop.get_data(['gsyn_inh']).filter(name='gsyn_inh'))[0].T
+            other_recordings[label]['gsyn_exc'] = np.array(
+                pop.get_data(['gsyn_exc']).filter(name='gsyn_exc'))[0].T
+            other_recordings[label]['v'] = np.array(
+                pop.get_data(['v']).segments[0].filter(name='v'))[0].T
+
+        try:
+            other_recordings[label]['packets'] = np.array(
+                pop.get_data(['packets-per-timestep']).segments[0].filter(
+                    name='packets-per-timestep'))[0].T
+        except:
+            print("Failed to retrieve packets-per-timestep")
+
+        neo_all_recordings[label] = pop.get_data('all')
+
+    return other_recordings, neo_all_recordings
+
+
+def analyse_run():
+    pass

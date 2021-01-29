@@ -18,7 +18,8 @@ from vor_cerebellum.parameters import (mfvn_min_weight, mfvn_max_weight,
 from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pfpc_initial_weight,
                                        pfpc_ltp_constant, pfpc_t_peak,
-                                       pfpc_ltd_constant)
+                                       pfpc_ltd_constant,
+                                       pc_neuron_params)
 from vor_cerebellum.utilities import *
 # Imports for SpiNNGym env
 import spinn_gym as gym
@@ -42,14 +43,26 @@ sample_time = args.error_window_size  # default 10 ms
 # SpiNNGym settings
 gain = args.gain
 
+# Passed-in args
+mfvn_ltd_constant = args.mfvn_scale or mfvn_ltd_constant
+pfpc_ltd_constant = args.pfpc_scale or pfpc_ltd_constant
+
+mfvn_max_weight = args.mfvn_max_weight or mfvn_max_weight
+pfpc_max_weight = args.pfpc_max_weight or pfpc_max_weight
+
+mfvn_ltp_constant = args.mfvn_ltp_constant or mfvn_ltp_constant
+pfpc_ltp_constant = args.pfpc_ltp_constant or pfpc_ltp_constant
+
+vn_neuron_params['cm'] = args.vn_cm or vn_neuron_params['cm']
+
 # Synapse parameters
 gc_pc_weights = 0.005
 mf_vn_weights = 0.0005
-pc_vn_weights = 0.005  # 0.08 also worked for 5x slowdown, 0.01 was the "original"
-cf_pc_weights = 0  # 0.005
+pc_vn_weights = args.pcvn_weight or 0.005  # 0.08 also worked for 5x slowdown, 0.01 was the "original"
+cf_pc_weights = 0.005  # 0.005
 mf_gc_weights = 0.5
 go_gc_weights = 0.002
-mf_go_weights = 0.1
+mf_go_weights = 0.08
 
 # Network parameters
 num_MF_neurons = 100
@@ -79,6 +92,15 @@ all_neurons = {
     "climbing_fibres": num_CF_neurons
 }
 
+all_neuron_params = {
+    "mossy_fibres": None,
+    "granule": neuron_params,
+    "golgi": neuron_params,
+    "purkinje": pc_neuron_params,
+    "vn": vn_neuron_params,
+    "climbing_fibres": None
+}
+
 all_populations = {
 
 }
@@ -95,7 +117,7 @@ all_projections = {
 
 }
 
-neo_all_recordings = {}
+
 
 # Weights of pf_pc
 weight_dist_pfpc = RandomDistribution('uniform',
@@ -105,13 +127,14 @@ weight_dist_pfpc = RandomDistribution('uniform',
 
 global_n_neurons_per_core = 50
 ss_neurons_per_core = 25
+pressured_npc = 10
 per_pop_neurons_per_core_constraint = {
     'mossy_fibres': global_n_neurons_per_core,
     'granule': global_n_neurons_per_core,
     'golgi': global_n_neurons_per_core,
-    'purkinje': 10,
-    'vn': 10,
-    'climbing_fibres': global_n_neurons_per_core,
+    'purkinje': pressured_npc,
+    'vn': pressured_npc,
+    'climbing_fibres': ss_neurons_per_core,
 }
 
 sim.setup(timestep=1., min_delay=1, max_delay=15)
@@ -179,7 +202,7 @@ all_populations["golgi"] = GOC_population
 
 # create PC population
 PC_population = sim.Population(num_PC_neurons,  # number of neurons
-                               sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
+                               sim.extra_models.IFCondExpCerebellum(**pc_neuron_params),  # Neuron model
                                label="PC",
                                additional_parameters={"rb_left_shifts": rbls['purkinje']}
                                )
@@ -362,7 +385,8 @@ perfect_eye_pos = np.concatenate((head_pos[midway_point:], head_pos[:midway_poin
 perfect_eye_vel = np.concatenate((head_vel[midway_point:], head_vel[:midway_point]))
 
 if USE_MOTION_TARGET:
-    head_pos[:] = -0.7
+    head_pos[:midway_point] = -0.7
+    head_pos[midway_point:] = 0.7
     head_vel[:] = 0.0
     perfect_eye_pos = head_pos
     perfect_eye_vel = head_vel
@@ -389,14 +413,8 @@ simulator = get_simulator()
 
 # ============================  Set up recordings ============================
 
-MF_population.record(['spikes'])
-CF_population.record(['spikes'])
-GC_population.record('all')
-# GOC_population.record(['spikes'])
-GOC_population.record('all')
-VN_population.record('all')  # VN_population.record(['spikes'])
-# PC_population.record(['spikes'])
-PC_population.record('all')
+# Enable relevant recordings
+enable_recordings_for(all_populations, full_recordings=args.full_recordings)
 
 # ============================  Set up constraints ============================
 
@@ -422,28 +440,7 @@ try:
     for run in range(runtime // single_runtime):
         sim.run(single_runtime)
         # Retrieve final network connectivity
-        try:
-            for label, p in all_projections.items():
-                if p is None:
-                    print("Projection", label, "is not implemented!")
-                    continue
-                print("Retrieving connectivity for projection ", label, "...")
-                try:
-                    conn = \
-                        np.array(p.get(('weight', 'delay'),
-                                       format="list")._get_data_items())
-                except Exception as e:
-                    print("Careful! Something happened when retrieving the "
-                          "connectivity:", e, "\nRetrying...")
-                    conn = \
-                        np.array(p.get(('weight', 'delay'), format="list"))
-
-                conn = np.array(conn.tolist())
-                final_connectivity[label].append(conn)
-        except:
-            # This simulator might not support the way this is done
-            final_connectivity = []
-            traceback.print_exc()
+        take_connectivity_snapshot(all_projections, final_connectivity)
 except Exception as e:
     print("An exception occurred during execution!")
     traceback.print_exc()
@@ -465,33 +462,10 @@ PC_spikes = PC_population.get_data('spikes')
 mfvn_weights = mf_vn_connections.get('weight', 'list', with_address=False)
 pfpc_weights = pf_pc_connections.get('weight', 'list', with_address=False)
 
-# Retrieve recordings
-all_spikes = {}
-for label, pop in all_populations.items():
-    if pop is not None:
-        print("Retrieving recordings for ", label, "...")
-        all_spikes[label] = pop.get_data(['spikes'])
-other_recordings = {}
-for label, pop in all_populations.items():
-    if label in ["mossy_fibres", "climbing_fibres"]:
-        continue
-    print("Retrieving recordings for ", label, "...")
-    other_recordings[label] = {}
-
-    other_recordings[label]['gsyn_inh'] = np.array(
-        pop.get_data(['gsyn_inh']).filter(name='gsyn_inh'))[0].T
-
-    other_recordings[label]['gsyn_exc'] = np.array(
-        pop.get_data(['gsyn_exc']).filter(name='gsyn_exc'))[0].T
-
-    other_recordings[label]['v'] = np.array(
-        pop.get_data(['v']).segments[0].filter(name='v'))[0].T
-
-    other_recordings[label]['packets'] = np.array(
-        pop.get_data(['packets-per-timestep']).segments[0].filter(
-            name='packets-per-timestep'))[0].T
-
-    neo_all_recordings[label] = pop.get_data('all')
+# Retrieve recordings for LIF populations
+all_spikes = retrieve_all_spikes(all_populations)
+other_recordings, neo_all_recordings = \
+    retrieve_all_other_recordings(all_populations, args.full_recordings)
 # Get the data from the ICubVorEnv pop
 results = retrieve_and_package_results(icub_vor_env_pop, simulator)
 icub_snapshots.append(results)
@@ -559,6 +533,7 @@ np.savez_compressed(results_file,
                     neo_all_spikes=neo_all_spikes,
                     other_recordings=other_recordings,
                     all_neurons=all_neurons,
+                    all_neuron_params=all_neuron_params,
                     final_connectivity=final_connectivity,
                     initial_connectivity=initial_connectivity,
                     simtime=runtime,
@@ -669,64 +644,44 @@ for proj, conn in final_connectivity.items():
                     extensions=['.png', ])
         plt.close(f)
 
-F = Figure(
-    Panel(MF_spikes.segments[0].spiketrains,
-          yticks=True, markersize=2, xlim=(0, total_runtime),
-          xlabel='MF_spikes'),
-    Panel(GC_spikes.segments[0].spiketrains,
-          yticks=True, markersize=2, xlim=(0, total_runtime),
-          xlabel='GC_spikes'),
-    Panel(GOC_spikes.segments[0].spiketrains,
-          yticks=True, markersize=2, xlim=(0, total_runtime),
-          xlabel='GOC_spikes'),
-    Panel(PC_spikes.segments[0].spiketrains,
-          yticks=True, markersize=2, xlim=(0, total_runtime),
-          xlabel='PC_spikes'),
-    Panel(CF_spikes.segments[0].spiketrains,
-          yticks=True, markersize=2, xlim=(0, total_runtime),
-          xlabel='CF_spikes'),
-    Panel(VN_spikes.segments[0].spiketrains,
-          yticks=True, markersize=2, xlim=(0, total_runtime),
-          xlabel='VN_spikes'),
-    Panel(VN_spikes.segments[0].filter(name='gsyn_inh')[0],
-          ylabel="Membrane potential (mV)", yticks=True, xlim=(0, total_runtime))
-)
-save_figure(plt, os.path.join(fig_folder, "collections" + suffix),
-            extensions=['.png', ])
-# plt.show(block=False)
-
-plt.figure()
-plt.plot(mfvn_weights,
-         label='mf-vn weights (init: {})'.format(mfvn_initial_weight))
-plt.title("mfvn_weights")
-plt.legend()
-save_figure(plt, os.path.join(fig_folder, "mfvn_weights" + suffix),
-            extensions=['.png', ])
-
-plt.figure()
-plt.title("pfpc_weights")
-plt.plot(pfpc_weights, color='orange',
-         label='pf-pc weights (init: {})'.format(pfpc_initial_weight))
-plt.legend()
-save_figure(plt, os.path.join(fig_folder, "pfpc_weights" + suffix),
-            extensions=['.png', ])
-
-print(VN_transfer_func)
-plt.figure()
-plt.plot(VN_transfer_func)
-plt.title("vn_transfer_function")
-save_figure(plt, os.path.join(fig_folder, "VN_transfer_func" + suffix),
-            extensions=['.png', ])
-
 # plot the data from the ICubVorEnv pop
 plot_results(results_dict=results, simulation_parameters=simulation_parameters,
-             name=os.path.join(fig_folder, "cerebellum_icub_first_10k" + suffix), xlim=[0, 10000])
+             name=os.path.join(fig_folder, "cerebellum_icub_first_1k" + suffix),
+             all_spikes=all_spikes,
+             xlim=[0, 1000])
 
 plot_results(results_dict=results, simulation_parameters=simulation_parameters,
-             name=os.path.join(fig_folder, "cerebellum_icub_last_10k" + suffix), xlim=[runtime - 10000, runtime])
+             name=os.path.join(fig_folder, "cerebellum_icub_last_1k" + suffix),
+             all_spikes=all_spikes,
+             xlim=[runtime - 1000, runtime])
 
 plot_results(results_dict=results, simulation_parameters=simulation_parameters,
+             all_spikes=all_spikes,
              name=os.path.join(fig_folder, "cerebellum_icub_full" + suffix))
+
+# Plot at 3 times during the simulation
+errors = results['errors']
+f, axes = plt.subplots(1, 3,
+                       figsize=(14, 10), sharey='row', sharex='row', dpi=400)
+periods = [0, errors.size // 2, errors.size - 100]
+
+for index, curr_ax in enumerate(axes):
+    curr_errors = errors[periods[index]:periods[index] + 100]
+    curr_ax.hist(curr_errors,
+                 color=viridis_cmap(index / (3 + 1)),
+                 bins=21, rasterized=True, orientation='horizontal')
+    if index == 0:
+        curr_ax.set_ylabel("Error")
+    if index == 1:
+        curr_ax.set_title("Error evolution")
+    curr_ax.set_xlabel("Count")
+
+plt.tight_layout()
+save_figure(
+    plt,
+    os.path.join(fig_folder, "error_evolution{}".format(suffix)),
+    extensions=[".png", ".pdf"])
+plt.close(f)
 
 # Report time taken
 print("Results stored in  -- " + filename)
