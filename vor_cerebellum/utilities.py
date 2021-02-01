@@ -660,5 +660,172 @@ def retrieve_all_other_recordings(all_populations, full_recordings):
     return other_recordings, neo_all_recordings
 
 
-def analyse_run():
+def analyse_run(results_file, fig_folder, suffix):
+    # Check if the folders exist
+    if not os.path.isdir(fig_folder) and not os.path.exists(fig_folder):
+        os.mkdir(fig_folder)
+
+    # Get npz archive
+    previous_run_data = np.load(results_file + ".npz", allow_pickle=True)
+
+    # Get required parameters out of the
+    all_spikes = previous_run_data['all_spikes'].ravel()[0]
+    all_neurons = previous_run_data['all_neurons'].ravel()[0]
+    # TODO make sure all new runs save this info
+    # all_neuron_params = previous_run_data['all_neuron_params'].ravel()[0]
+    simulation_parameters = previous_run_data['simulation_parameters'].ravel()[0]
+    other_recordings = previous_run_data['other_recordings'].ravel()[0]
+    final_connectivity = previous_run_data['final_connectivity'].ravel()[0]
+    simtime = previous_run_data['simtime']
+    cell_params = previous_run_data['cell_params'].ravel()[0]
+    per_pop_neurons_per_core_constraint = previous_run_data['per_pop_neurons_per_core_constraint'].ravel()[0]
+    icub_snapshots = previous_run_data['icub_snapshots']
+    results = icub_snapshots[-1]
+    runtime = simulation_parameters['runtime']
+
+    # Compute plot order
+    plot_order = get_plot_order(all_spikes.keys())
+    n_plots = float(len(plot_order))
+
+    # Report useful parameters
+    print("=" * 80)
+    print("Analysis report")
+    print("-" * 80)
+    print("Current time",
+          plt.datetime.datetime.now().strftime("%H:%M:%S on %d.%m.%Y"))
+    # Report number of neurons
+    print("=" * 80)
+    print("Number of neurons in each population")
+    print("-" * 80)
+    for pop in plot_order:
+        print("\t{:20} -> {:10} neurons".format(pop, all_neurons[pop]))
+
+    # Report weights values
+    print("Average weight per projection")
+    print("-" * 80)
+    conn_dict = {}
+
+    for key in final_connectivity:
+        # Connection holder annoyance here:
+        conn = np.asarray(final_connectivity[key][-1])
+        if final_connectivity[key] is None or conn.size == 0:
+            print("Skipping analysing connection", key)
+            continue
+        conn_exists = True
+        if len(conn.shape) == 1 or conn.shape[1] != 4:
+            try:
+                x = np.concatenate(conn)
+                conn = x
+            except:
+                traceback.print_exc()
+            names = [('source', 'int_'),
+                     ('target', 'int_'),
+                     ('weight', 'float_'),
+                     ('delay', 'float_')]
+            useful_conn = np.zeros((conn.shape[0], 4), dtype=np.float)
+            for i, (n, _) in enumerate(names):
+                useful_conn[:, i] = conn[n].astype(np.float)
+            final_connectivity[key] = useful_conn.astype(np.float)
+            conn = useful_conn.astype(np.float)
+        conn_dict[key] = conn
+        mean = np.mean(conn[:, 2])
+        print("{:27} -> {:4.6f} uS".format(
+            key, mean))
+
+    print("Average Delay per projection")
+    print("-" * 80)
+    for key in final_connectivity:
+        try:
+            conn = conn_dict[key][-1]
+            mean = np.mean(conn[:, 3])
+            print("{:27} -> {:4.2f} ms".format(
+                key, mean))
+        except:
+            print(key)
+            traceback.print_exc()
+
+    print("Plotting spiking raster plot for all populations")
+    f, axes = plt.subplots(len(all_spikes.keys()), 1,
+                           figsize=(14, 20), sharex=True, dpi=400)
+    for index, pop in enumerate(plot_order):
+        curr_ax = axes[index]
+        # spike raster
+        if pop == "vn":
+            _times = simulation_parameters['vn_spikes'][:, 1]
+            _ids = simulation_parameters['vn_spikes'][:, 0]
+        else:
+            _times = all_spikes[pop][:, 1]
+            _ids = all_spikes[pop][:, 0]
+
+        curr_ax.scatter(_times,
+                        _ids,
+                        color=viridis_cmap(index / (n_plots + 1)),
+                        s=.5, rasterized=True)
+        curr_ax.set_title(use_display_name(pop))
+    plt.xlabel("Time (ms)")
+    f.tight_layout()
+    save_figure(plt, os.path.join(fig_folder, "raster_plots" + suffix),
+                extensions=['.png', '.pdf'])
+    plt.close(f)
+
+    for proj, conn in final_connectivity.items():
+        if proj in ['mf_vn', 'pf_pc']:
+            no_cons = len(conn)
+        else:
+            no_cons = 1
+        for i in range(no_cons):
+            f = plt.figure(1, figsize=(9, 9), dpi=400)
+            plt.hist(conn[i][:, 2], bins=20)
+            plt.title(use_display_name(proj))
+            plt.xlabel("Weight")
+            plt.ylabel("Count")
+            save_figure(plt, os.path.join(fig_folder, "{}_weight_histogram_snap{}".format(proj, i) + suffix),
+                        extensions=['.png', ])
+            plt.close(f)
+
+    # plot the data from the ICubVorEnv pop
+    plot_results(results_dict=results, simulation_parameters=simulation_parameters,
+                 name=os.path.join(fig_folder, "cerebellum_icub_first_1k" + suffix),
+                 all_spikes=all_spikes,
+                 xlim=[0, 1000])
+
+    plot_results(results_dict=results, simulation_parameters=simulation_parameters,
+                 name=os.path.join(fig_folder, "cerebellum_icub_last_1k" + suffix),
+                 all_spikes=all_spikes,
+                 xlim=[runtime - 1000, runtime])
+
+    plot_results(results_dict=results, simulation_parameters=simulation_parameters,
+                 all_spikes=all_spikes,
+                 name=os.path.join(fig_folder, "cerebellum_icub_full" + suffix))
+
+    # Plot at 3 times during the simulation
+    errors = results['errors']
+    f, axes = plt.subplots(1, 3,
+                           figsize=(14, 10), sharey='row', sharex='row', dpi=400)
+    periods = [0, errors.size // 2, errors.size - 100]
+
+    for index, curr_ax in enumerate(axes):
+        curr_errors = errors[periods[index]:periods[index] + 100]
+        curr_ax.hist(curr_errors,
+                     color=viridis_cmap(index / (3 + 1)),
+                     bins=21, rasterized=True, orientation='horizontal')
+        if index == 0:
+            curr_ax.set_ylabel("Error")
+        if index == 1:
+            curr_ax.set_title("Error evolution")
+        curr_ax.set_xlabel("Count")
+
+    plt.tight_layout()
+    save_figure(
+        plt,
+        os.path.join(fig_folder, "error_evolution{}".format(suffix)),
+        extensions=[".png", ".pdf"])
+    plt.close(f)
+
+
+def build_network_for_training():
+    pass
+
+
+def build_network_for_testing():
     pass
