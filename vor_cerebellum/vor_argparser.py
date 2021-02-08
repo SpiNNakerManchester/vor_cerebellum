@@ -170,6 +170,11 @@ parser.add_argument('--pfpc_ltp_constant', type=float,
                          "-- default {}".format(None),
                     default=None)
 
+parser.add_argument('--snapshot', type=str,
+                    help="[network rebuilding] select whether to rebuild network with the _last_ "
+                         "extracted weights or the weights which produced the _best_ mean average error"
+                         "-- default {}".format("last"),
+                    default="last")
 
 args = parser.parse_args()
 from pprint import pprint as pp

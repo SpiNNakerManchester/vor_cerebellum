@@ -36,6 +36,31 @@ cell_params = previous_run_data['cell_params'].ravel()[0]
 per_pop_neurons_per_core_constraint = previous_run_data['per_pop_neurons_per_core_constraint'].ravel()[0]
 icub_snapshots = previous_run_data['icub_snapshots']
 
+# Which snapshot to use?
+if args.snapshot.lower() == "last":
+    write_header("Rebuilding network using the LAST extracted weights")
+    snap_index = -1
+elif args.snapshot.lower() == "best":
+    write_header("Rebuilding network using the BEST extracted weights")
+    # unpacking results
+    errors = icub_snapshots[-1]['errors']
+
+    # unpacking simulation params
+    runtime = simulation_parameters['runtime']
+    error_window_size = simulation_parameters['error_window_size']
+    perfect_eye_pos = simulation_parameters['perfect_eye_pos']
+    vn_size = simulation_parameters['vn_size']
+    cf_size = simulation_parameters['cf_size']
+
+    pattern_period = perfect_eye_pos.shape[0]  # in ms
+
+    n_plots = runtime / (pattern_period)
+    error_windows_per_pattern = int(pattern_period / error_window_size)
+    reshaped_error = errors.reshape(errors.size // error_windows_per_pattern, error_windows_per_pattern)
+    maes = np.mean(np.abs(reshaped_error), axis=1)
+    snap_index = np.argmin(maes)
+
+write_value("Snapshot index", snap_index)
 # Network parameters
 num_MF_neurons = all_neurons['mossy_fibres']
 num_GC_neurons = all_neurons['granule']
@@ -57,7 +82,6 @@ sample_time = args.error_window_size  # default 10 ms
 
 # SpiNNGym settings
 gain = args.gain
-
 
 all_populations = {
 
@@ -186,7 +210,7 @@ all_populations["climbing_fibres"] = CF_population
 # Create MF-GO connections
 mf_go_connections = sim.Projection(MF_population,
                                    GoC_population,
-                                   sim.FromListConnector(final_connectivity['mf_goc'][-1]),
+                                   sim.FromListConnector(final_connectivity['mf_goc'][snap_index]),
                                    receptor_type='excitatory',
                                    label="mf_goc")
 all_projections["mf_goc"] = mf_go_connections
@@ -198,17 +222,16 @@ list_GOC_GC = []
 list_MF_GC = []
 list_GOC_GC_2 = []
 
-
 GO_GC_con1 = sim.Projection(GoC_population,
                             GrC_population,
-                            sim.FromListConnector(final_connectivity['goc_grc_1'][-1]),
+                            sim.FromListConnector(final_connectivity['goc_grc_1'][snap_index]),
                             label='goc_grc_1',
                             receptor_type='inhibitory')  # this should be inhibitory
 all_projections["goc_grc_1"] = GO_GC_con1
 
 MF_GC_con2 = sim.Projection(MF_population,
                             GrC_population,
-                            sim.FromListConnector(final_connectivity['mf_grc'][-1]),
+                            sim.FromListConnector(final_connectivity['mf_grc'][snap_index]),
                             label='mf_grc',
                             receptor_type='excitatory')
 
@@ -216,7 +239,7 @@ all_projections["mf_grc"] = MF_GC_con2
 
 GO_GC_con3 = sim.Projection(GoC_population,
                             GrC_population,
-                            sim.FromListConnector(final_connectivity['goc_grc_2'][-1]),
+                            sim.FromListConnector(final_connectivity['goc_grc_2'][snap_index]),
                             label='goc_grc_2',
                             receptor_type='inhibitory')
 all_projections["goc_grc_2"] = GO_GC_con3
@@ -226,7 +249,7 @@ ff_conn_vn = ff_1_to_1_odd_even_mapping_reversed(num_VN_neurons)
 assert ff_conn_vn.shape[1] == 2
 ff_pc_vn_connections = sim.Projection(PC_population,
                                       VN_population,
-                                      sim.FromListConnector(conn_list=final_connectivity['pc_vn'][-1]),
+                                      sim.FromListConnector(conn_list=final_connectivity['pc_vn'][snap_index]),
                                       label='pc_vn',
                                       receptor_type='inhibitory')
 all_projections["pc_vn"] = ff_pc_vn_connections
@@ -234,7 +257,7 @@ all_projections["pc_vn"] = ff_pc_vn_connections
 # Create MF to VN connections
 mf_vn_connections = sim.Projection(
     MF_population, VN_population,
-    sim.FromListConnector(final_connectivity['mf_vn'][-1]),
+    sim.FromListConnector(final_connectivity['mf_vn'][snap_index]),
     label='mf_vn',
     receptor_type="excitatory")
 all_projections["mf_vn"] = mf_vn_connections
@@ -243,7 +266,7 @@ all_projections["mf_vn"] = mf_vn_connections
 # Create PF-PC connections
 pf_pc_connections = sim.Projection(
     GrC_population, PC_population,
-    sim.FromListConnector(final_connectivity['pf_pc'][-1]),
+    sim.FromListConnector(final_connectivity['pf_pc'][snap_index]),
     label='pf_pc',
     receptor_type="excitatory")
 all_projections["pf_pc"] = pf_pc_connections
