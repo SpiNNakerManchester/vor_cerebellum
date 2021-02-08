@@ -376,7 +376,6 @@ def plot_results(results_dict, simulation_parameters, name, all_spikes, xlim=Non
     plt.ylim([-0.1, cf_size + 0.1])
     plt.xlabel("Time (ms)")
     save_figure(plt, name, extensions=[".png", ".pdf", ])
-    plt.show()
     plt.close(fig)
 
 
@@ -832,9 +831,7 @@ def analyse_run(results_file, fig_folder, suffix):
     n_plots = runtime / (pattern_period)
     error_windows_per_pattern = int(pattern_period / error_window_size)
     reshaped_error = errors.reshape(errors.size // error_windows_per_pattern, error_windows_per_pattern)
-    maes = np.mean(reshaped_error, axis=1)
-    print(maes.shape)
-    plt.plot(maes)
+    maes = np.mean(np.abs(reshaped_error), axis=1)
 
     bp_width = 0.7
     f = plt.figure(figsize=(12, 8), dpi=600)
@@ -862,10 +859,10 @@ def analyse_run(results_file, fig_folder, suffix):
     # Plot at 3 times during the simulation
     f, axes = plt.subplots(1, 3,
                            figsize=(14, 10), sharey='row', sharex='row', dpi=400)
-    periods = [0, reshaped_error.shape[0] // 2, reshaped_error.shape[0]]
+    periods = [0, reshaped_error.shape[0] // 2, reshaped_error.shape[0]-1]
 
     for index, curr_ax in enumerate(axes):
-        curr_errors = reshaped_error[index]
+        curr_errors = reshaped_error[periods[index]]
         curr_ax.hist(curr_errors,
                      color=viridis_cmap(index / (3 + 1)),
                      bins=21, rasterized=True, orientation='horizontal')

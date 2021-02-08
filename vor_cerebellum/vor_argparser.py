@@ -170,11 +170,16 @@ parser.add_argument('--pfpc_ltp_constant', type=float,
                          "-- default {}".format(None),
                     default=None)
 
-parser.add_argument('--snapshot', type=str,
+parser.add_argument('--snapshot', type=str, choices=["last", "best"],
                     help="[network rebuilding] select whether to rebuild network with the _last_ "
                          "extracted weights or the weights which produced the _best_ mean average error"
                          "-- default {}".format("last"),
                     default="last")
+
+parser.add_argument('--experiment', type=str, choices=["zero", "constant", "bistate", "tristate"],
+                    help="[target reaching] type of target reaching experiment"
+                         "-- default {}".format("bistate"),
+                    default="bistate")
 
 args = parser.parse_args()
 from pprint import pprint as pp
