@@ -217,7 +217,10 @@ def generate_head_position_and_velocity(time, dt=0.001, slowdown=1):
     if slowdown > 1:
         pos = np.repeat(pos, slowdown)
     temp_pos = np.concatenate(([pos[-1]], pos))
-    vel = np.diff(temp_pos) / POS_TO_VEL
+
+    vel = np.diff(temp_pos) / (POS_TO_VEL * slowdown)
+
+    vel = np.repeat(vel[::int(slowdown)], slowdown)
 
     # if slowdown == 1:
     #     assert np.all(np.isclose(vel, -np.cos(i * 2 * np.pi)), 0.001)
@@ -375,6 +378,10 @@ def plot_results(results_dict, simulation_parameters, name, all_spikes, xlim=Non
     save_figure(plt, name, extensions=[".png", ".pdf", ])
     plt.show()
     plt.close(fig)
+
+
+def color_for_index(index, size, cmap=viridis_cmap):
+    return cmap(1 / (size - index + 1))
 
 
 def remap_odd_even(original_spikes, size):
@@ -798,14 +805,67 @@ def analyse_run(results_file, fig_folder, suffix):
                  all_spikes=all_spikes,
                  name=os.path.join(fig_folder, "cerebellum_icub_full" + suffix))
 
+
+
+    # unpacking results
+    errors = icub_snapshots[i]['errors']
+    l_counts = np.asarray(icub_snapshots[i]['l_counts']).ravel()
+    r_counts = np.asarray(icub_snapshots[i]['r_counts']).ravel()
+    rec_eye_pos = icub_snapshots[i]['rec_eye_pos']
+    rec_eye_vel = icub_snapshots[i]['rec_eye_vel']
+
+    # unpacking simulation params
+    runtime = simulation_parameters['runtime']
+    error_window_size = simulation_parameters['error_window_size']
+    vn_spikes = simulation_parameters['vn_spikes']
+    cf_spikes = simulation_parameters['cf_spikes']
+    perfect_eye_pos = simulation_parameters['perfect_eye_pos']
+    perfect_eye_vel = simulation_parameters['perfect_eye_vel']
+    vn_size = simulation_parameters['vn_size']
+    cf_size = simulation_parameters['cf_size']
+
+    # Error plots
+    # Evolution of error
+    # print("Plotting boxplot for {} for all populations".format(variable_name))
+    pattern_period = perfect_eye_pos.shape[0]  # in ms
+
+    n_plots = runtime / (pattern_period)
+    error_windows_per_pattern = int(pattern_period / error_window_size)
+    reshaped_error = errors.reshape(errors.size // error_windows_per_pattern, error_windows_per_pattern)
+    maes = np.mean(reshaped_error, axis=1)
+    print(maes.shape)
+    plt.plot(maes)
+
+    bp_width = 0.7
+    f = plt.figure(figsize=(12, 8), dpi=600)
+    for index in np.arange(reshaped_error.shape[0]):
+        curr_data = reshaped_error[index]
+        plt.boxplot(curr_data, notch=True, positions=[index + 1],
+                    medianprops=dict(
+                        color=color_for_index(index, n_plots),
+                        linewidth=1.5),
+                    widths=bp_width
+                    )
+    plt.ylabel("Error")
+    plt.xlim([0, n_plots + 1])
+    plt.grid(True, which="major", axis="y")
+    plt.xlabel('Pattern #')
+    xtick_display_names = [str(int(x)) for x in np.arange(reshaped_error.shape[0]) + 1]
+    _, labels = plt.xticks(np.arange(n_plots) + 1, xtick_display_names)
+
+    f.tight_layout()
+    save_figure(plt, os.path.join(fig_folder,
+                                  "bp_errors{}".format(suffix)),
+                extensions=['.png', '.pdf'])
+    plt.close(f)
+
     # Plot at 3 times during the simulation
-    errors = results['errors']
     f, axes = plt.subplots(1, 3,
                            figsize=(14, 10), sharey='row', sharex='row', dpi=400)
-    periods = [0, errors.size // 2, errors.size - 100]
+    periods = [0, reshaped_error.shape[0] // 2, reshaped_error.shape[0]]
 
     for index, curr_ax in enumerate(axes):
-        curr_errors = errors[periods[index]:periods[index] + 100]
+        curr_errors = reshaped_error[index]
         curr_ax.hist(curr_errors,
                      color=viridis_cmap(index / (3 + 1)),
                      bins=21, rasterized=True, orientation='horizontal')
@@ -820,6 +880,36 @@ def analyse_run(results_file, fig_folder, suffix):
         plt,
         os.path.join(fig_folder, "error_evolution{}".format(suffix)),
         extensions=[".png", ".pdf"])
+    plt.close(f)
+
+    f = plt.figure(figsize=(10, 7), dpi=400)
+    plt.plot(np.arange(reshaped_error.shape[0]) + 1, np.std(reshaped_error, axis=1))
+    plt.ylabel("Error std.")
+    plt.xlim([0, n_plots + 1])
+    plt.grid(True, which="major", axis="y")
+    plt.xlabel('Pattern #')
+    xtick_display_names = [str(int(x)) for x in np.arange(reshaped_error.shape[0]) + 1]
+    _, labels = plt.xticks(np.arange(n_plots) + 1, xtick_display_names)
+
+    f.tight_layout()
+    save_figure(plt, os.path.join(fig_folder,
+                                  "error_std{}".format(suffix)),
+                extensions=['.png', '.pdf'])
+    plt.close(f)
+
+    f = plt.figure(figsize=(10, 7), dpi=400)
+    plt.plot(np.arange(reshaped_error.shape[0]) + 1, np.mean(np.abs(reshaped_error), axis=1))
+    plt.ylabel("Abs. error")
+    plt.xlim([0, n_plots + 1])
+    plt.grid(True, which="major", axis="y")
+    plt.xlabel('Pattern #')
+    xtick_display_names = [str(int(x)) for x in np.arange(reshaped_error.shape[0]) + 1]
+    _, labels = plt.xticks(np.arange(n_plots) + 1, xtick_display_names)
+
+    f.tight_layout()
+    save_figure(plt, os.path.join(fig_folder,
+                                  "error_mae{}".format(suffix)),
+                extensions=['.png', '.pdf'])
     plt.close(f)
 
 

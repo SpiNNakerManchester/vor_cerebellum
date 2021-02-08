@@ -42,6 +42,7 @@ sample_time = args.error_window_size  # default 10 ms
 
 # SpiNNGym settings
 gain = args.gain
+vel_to_pos = 1 / (2 * np.pi * args.slowdown_factor * gain)
 
 # Passed-in args
 mfvn_ltd_constant = args.mfvn_scale or mfvn_ltd_constant
@@ -56,10 +57,10 @@ pfpc_ltp_constant = args.pfpc_ltp_constant or pfpc_ltp_constant
 vn_neuron_params['cm'] = args.vn_cm or vn_neuron_params['cm']
 
 # I think some normalisation is in order for different slowdowns
-pfpc_ltd_constant /= args.slowdown_factor
-pfpc_ltp_constant /= args.slowdown_factor
-mfvn_ltd_constant /= args.slowdown_factor
-mfvn_ltp_constant /= args.slowdown_factor
+# pfpc_ltd_constant /= args.slowdown_factor
+# pfpc_ltp_constant /= args.slowdown_factor
+# mfvn_ltd_constant /= args.slowdown_factor
+# mfvn_ltp_constant /= args.slowdown_factor
 
 # Synapse parameters
 gc_pc_weights = 0.005
@@ -405,7 +406,9 @@ icub_vor_env_model = gym.ICubVorEnv(
     low_error_rate=args.f_base,
     high_error_rate=args.f_peak,
     wta_decision=args.wta_decision,
-    output_size=num_CF_neurons, gain=gain)
+    output_size=num_CF_neurons, gain=gain,
+    pos_to_vel=vel_to_pos
+)
 icub_vor_env_pop = sim.Population(ICUB_VOR_VENV_POP_SIZE, icub_vor_env_model)
 
 # Input -> ICubVorEnv projection

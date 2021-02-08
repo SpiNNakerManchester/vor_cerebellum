@@ -12,6 +12,9 @@ gain = 20.0
 
 slowdown_factor = 2
 midway_point = 500 * slowdown_factor
+vel_to_pos = 1 / (2 * np.pi * slowdown_factor * gain)
+pos_to_vel = 1 / (0.001 * 2 * np.pi * slowdown_factor)
+error_window_size = 10  # ms
 
 head_pos, head_vel = generate_head_position_and_velocity(1, slowdown=slowdown_factor)
 
@@ -22,7 +25,7 @@ perfect_eye_vel = np.concatenate((head_vel[midway_point:], head_vel[:midway_poin
 input_spike_times = [[] for _ in range(input_size)]
 # the constant number (0.000031) is the effect of a single spike on the head position
 # assert (np.isclose(np.abs(np.diff(head_pos)[0]), no_required_spikes_per_chunk * 0.000031), 0.001)
-sub_head_pos = np.diff(head_pos)
+sub_head_pos = np.diff(head_vel)
 head_movement_per_spike = 2 ** (-15) * gain
 sub_eye_pos = np.diff(np.concatenate((perfect_eye_pos, [perfect_eye_pos[0]])))
 
@@ -30,9 +33,8 @@ sub_eye_pos = np.diff(np.concatenate((perfect_eye_pos, [perfect_eye_pos[0]])))
 no_required_spikes_per_chunk = np.ceil(np.abs(sub_head_pos[0]) / head_movement_per_spike)
 
 # build ICubVorEnv model
-error_window_size = 10   # ms
 adjusted_window = 1000 * slowdown_factor
-npc_limit = 200 # 25
+npc_limit = 200  # 25
 no_input_cores = int(input_size / npc_limit)
 input_spike_times = [[] for _ in range(input_size)]
 for ts in range(runtime - 1):
@@ -54,11 +56,15 @@ output_pop = p.Population(output_size, p.SpikeSourcePoisson(rate=0))
 
 # Instantiate venv
 icub_vor_env_model = gym.ICubVorEnv(
-    head_pos=head_pos, head_vel=head_vel, perfect_eye_pos=perfect_eye_pos, perfect_eye_vel=perfect_eye_vel,
+    head_pos=head_pos, head_vel=head_vel,
+    perfect_eye_pos=perfect_eye_pos, perfect_eye_vel=perfect_eye_vel,
     error_window_size=error_window_size, wta_decision=False,
     low_error_rate=2,
     high_error_rate=20,
-    output_size=output_size)
+    output_size=output_size,
+    gain=gain,
+    pos_to_vel=vel_to_pos
+)
 icub_vor_env_pop = p.Population(ICUB_VOR_VENV_POP_SIZE, icub_vor_env_model)
 
 # Set recording for input and output pop (env pop records by default)
@@ -104,6 +110,9 @@ simulation_parameters = {
 
 # plot the data from the ICubVorEnv pop
 plot_results(results_dict=results, simulation_parameters=simulation_parameters,
+             all_spikes={
+                 'purkinje': np.empty([0, 2])
+             },
              name="figures/spinngym_icub_vor_test_perfect")
 
 print("Done")
