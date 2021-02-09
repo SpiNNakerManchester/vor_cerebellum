@@ -45,9 +45,9 @@ vn_neuron_params = {
 
 # PF-PC learning parameters
 pfpc_min_weight = 0
-pfpc_max_weight = 1.8e-3  # 0.001  # setting this too high will silence VN too much.
+pfpc_max_weight = 3.0e-3  # 0.001  # setting this too high will silence VN too much.
 pfpc_initial_weight = 5.0e-4  # pfpc_max_weight  # 0.0005
-pfpc_ltp_constant = pfpc_max_weight / 150.  # 2**(-15 + 6) / (2**10)  # 0.00005
+pfpc_ltp_constant = pfpc_max_weight / 50.  # 2**(-15 + 6) / (2**10)  # 0.00005
 pfpc_ltd_constant = 0.8
 pfpc_t_peak = 100  # ms
 pfpc_plasticity_delay = 4  # ms
@@ -56,7 +56,7 @@ pfpc_plasticity_delay = 4  # ms
 mfvn_min_weight = 0
 mfvn_max_weight = 1.25e-3  # 0.001
 mfvn_initial_weight = 1.0e-4  # 0.0005
-mfvn_ltp_constant = mfvn_max_weight / 100.  # 0.0005  # 0.00005
+mfvn_ltp_constant = mfvn_max_weight / 50.  # 0.0005  # 0.00005
 mfvn_ltd_constant = 1.0
 mfvn_beta = 11
 mfvn_sigma = 201
