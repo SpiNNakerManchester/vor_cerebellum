@@ -20,7 +20,9 @@ n_timesteps = 200
 
 all_projections = []
 all_populations = []
+all_sources = []
 final_connectivity = []
+final_input_spikes = []
 final_recordings = []
 
 p.setup(1)  # simulation timestep (ms)
@@ -51,6 +53,7 @@ for curr_timestep_diff in range(n_timesteps):
                                  {'spike_times': pf_spike_times},  # source spike times
                                  label="GrC" + str(curr_timestep_diff)  # identifier
                                  )
+    all_sources.append(granular_cell)
 
     # Create projection from GC to PC
     pfpc_plas = p.STDPMechanism(
@@ -69,33 +72,34 @@ for curr_timestep_diff in range(n_timesteps):
     # Create projection from CF to PC
     synapse = p.Projection(
         climbing_fibre, purkinje_cell, p.OneToOneConnector(),
-        p.StaticSynapse(weight=0.1, delay=1), receptor_type="excitatory")
+        p.StaticSynapse(weight=0.0, delay=1), receptor_type="excitatory")
 
-    # granular_cell.record('spikes')
-    # climbing_fibre.record('spikes')
+    granular_cell.record("spikes")
     purkinje_cell.record("all")
     all_populations.append(purkinje_cell)
 
+climbing_fibre.record('spikes')
 p.run(runtime)
 
-# granluar_cell_spikes = granular_cell.get_data('spikes')
-# climbing_fibre_spikes = climbing_fibre.get_data('spikes')
-# purkinje_data = purkinje_cell.get_data()
-
+climbing_fibre_spikes = climbing_fibre.get_data('spikes')
 
 for i in range(n_timesteps):
     final_recordings.append(all_populations[i].get_data())
+    final_input_spikes.append(all_sources[i].spinnaker_get_data("spikes"))
     final_connectivity.append(all_projections[i].get('weight', 'list', with_address=False))
 
 cf_synapse_weight = synapse.get('weight', 'list', with_address=False)
 
 connection_strength = np.asarray(final_connectivity).ravel()
+grc_spikes = np.asarray(final_input_spikes)
 
 p.end()
 
 grc_spike_times = np.asarray(grc_spike_times)
 
 assert np.all(grc_spike_times[:, 1] == final_grc_spike_time)
+assert grc_spikes.shape[1] == 2
+assert np.all(grc_spikes[:, :, 1][:, 1] == final_grc_spike_time)
 
 write_header("pf-PC LTD Curve")
 write_value("CF-PC weight", cf_synapse_weight)
@@ -137,7 +141,6 @@ for conn_matrix, mat_name, cbar_label in zip(
 
     save_figure(plt, os.path.join('figures/',
                                   "{}".format(mat_name)),
-                #                         extensions=['.png', '.pdf'])
                 extensions=['.png', ])
     plt.close(f)
 
