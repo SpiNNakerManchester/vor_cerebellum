@@ -9,6 +9,7 @@ import copy
 import os
 import string
 import traceback
+from mpl_toolkits.axes_grid1 import make_axes_locatable, ImageGrid
 
 from elephant.spike_train_generation import homogeneous_poisson_process
 import quantities as pq
@@ -908,6 +909,93 @@ def analyse_run(results_file, fig_folder, suffix):
                                   "error_mae{}".format(suffix)),
                 extensions=['.png', '.pdf'])
     plt.close(f)
+
+    # Looking at weights
+    write_header("Looking at weights to see if they are being optimised well")
+    for proj, pre_pop, post_pop in zip(['pf_pc', 'mf_vn'],
+                              ['granule', 'mossy_fibres'],
+                              ['purkinje', 'vn']):
+        write_value("proj", proj)
+        write_value("pre_pop", pre_pop)
+        write_value("post_pop", post_pop)
+        ff_conn = final_connectivity[proj][-1]
+        conn_matrix = np.ones((all_neurons[pre_pop], all_neurons[post_pop])) * np.nan
+        delay_matrix = np.ones(conn_matrix.shape) * np.nan
+        for s, t, w, d in ff_conn:
+            s = int(s)
+            t = int(t)
+            conn_matrix[s, t] = w
+            delay_matrix[s, t] = d
+
+        # Weight matrix
+        f = plt.figure(1, figsize=(12, 9), dpi=500)
+        im = plt.imshow(conn_matrix,
+                        interpolation='none',
+                        extent=[0, all_neurons[post_pop],
+                                0, all_neurons[pre_pop]],
+                        origin='lower')
+        ax = plt.gca()
+        ax.set_aspect('auto')
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", "5%", pad="3%")
+        cbar = plt.colorbar(im, cax=cax)
+        cbar.set_label("Syn. weight (uS)")
+
+        ax.set_xlabel("Target Neuron ID")
+        ax.set_ylabel("Source Neuron ID")
+        ax.set_title(use_display_name(proj))
+        save_figure(plt, os.path.join(fig_folder,
+                                      "{}_weight_matrix{}".format(proj, suffix)),
+                                            extensions=['.png', '.pdf'])
+        plt.close(f)
+
+        # Delay matrix
+        # f = plt.figure(1, figsize=(12, 9), dpi=500)
+        # im = plt.imshow(delay_matrix * 1000,
+        #                 interpolation='none',
+        #                 extent=[0, all_neurons[pre_pop],
+        #                         0, all_neurons[post_pop]],
+        #                 origin='lower')
+        # ax = plt.gca()
+        # ax.set_aspect('auto')
+        # divider = make_axes_locatable(ax)
+        # cax = divider.append_axes("right", "5%", pad="3%")
+        # cbar = plt.colorbar(im, cax=cax)
+        # cbar.set_label("Delay (ms)")
+        #
+        # ax.set_xlabel("Target Neuron ID")
+        # ax.set_ylabel("Source Neuron ID")
+        # plt.title(use_display_name(proj))
+        # save_figure(plt, os.path.join(fig_folder,
+        #                               "{}_delay_matrix{}".format(proj, suffix)),
+        #             extensions=['.png', '.pdf'])
+        # plt.close(f)
+
+        # Weight histograms for each side
+        pop_split = conn_matrix.shape[1] // 2
+        weights_per_mc = []
+        for pop_i in range(2):
+            weights_per_mc.append(conn_matrix[:, pop_i * pop_split:(pop_i + 1) * pop_split].ravel())
+
+            print("Mean weight for this side:", np.mean(weights_per_mc[-1]))
+
+        # For all to all connectivity this should hold
+        if np.all(np.isfinite(conn_matrix)):
+            assert weights_per_mc[0].size == weights_per_mc[1].size
+
+        f = plt.figure(1, figsize=(9, 9), dpi=400)
+        plt.hist(weights_per_mc, bins=20)
+        plt.title(use_display_name(proj))
+        plt.xlabel("Weight (uS)")
+        plt.ylabel("Count")
+        save_figure(plt, os.path.join(fig_folder, "LR_{}_weight_histogram_snap{}".format(proj, suffix)),
+                    extensions=['.png', ])
+        plt.close(f)
+        write_sep()
+
+
+
+
 
 
 def build_network_for_training():
