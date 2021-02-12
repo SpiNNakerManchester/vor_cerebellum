@@ -140,7 +140,7 @@ for conn_matrix, mat_name, cbar_label in zip(
     ax.set_ylabel("Source Neuron ID")
 
     save_figure(plt, os.path.join('figures/',
-                                  "{}".format(mat_name)),
+                                  "pf_pc_{}".format(mat_name)),
                 extensions=['.png', ])
     plt.close(f)
 

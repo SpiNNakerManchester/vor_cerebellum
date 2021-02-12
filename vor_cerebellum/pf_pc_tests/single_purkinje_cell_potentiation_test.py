@@ -3,9 +3,8 @@ LTP for PF-PC cells is done via a constant amount for each pre-synaptic spike. T
 tests this behaviour on SpiNNaker.
 """
 import spynnaker8 as sim
-import numpy as np
 from pyNN.utility.plotting import Figure, Panel
-import matplotlib.pyplot as plt
+from vor_cerebellum.utilities import *
 from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pfpc_ltp_constant, pfpc_t_peak,
                                        pfpc_plasticity_delay,
@@ -60,8 +59,9 @@ purkinje_data = purkinje_cell.get_data()
 sim.end()
 
 pf_weights = np.asarray(pf_weights).ravel()
-print(pf_weights)
-print(np.diff(pf_weights))
+write_value("pf-PC weight", pf_weights)
+write_value("pf-PC weight 1D diff", np.diff(pf_weights))
+write_value("pf-PC LTP constant", pfpc_ltp_constant)
 
 # Plot
 fig = plt.figure(figsize=(4, 4), dpi=400)
@@ -85,9 +85,9 @@ F = Figure(
     Panel(purkinje_data.segments[0].spiketrains,
           yticks=True, markersize=2, xlim=(0, runtime)),
 )
-plt.savefig("figures/pc_single_potentiation.png", dpi=400)
+plt.savefig("figures/pc_potentiation_collection.png", dpi=400)
 
-thresh = 0.0001
+thresh = 0.001
 assert np.all(np.isclose(pf_weights,
                          np.arange(no_runs) * pfpc_ltp_constant,
                          thresh)), "PF-PC weights are not within {} of the correct value".format(thresh)

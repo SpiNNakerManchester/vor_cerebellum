@@ -57,8 +57,9 @@ vestibular_neuclei_data = vestibular_neuclei.get_data()
 sim.end()
 
 mf_weights = np.asarray(mf_weights).ravel()
-print(mf_weights)
-print(np.diff(mf_weights))
+write_value("MF-VN weight", mf_weights)
+write_value("MF-VN weight 1D diff", np.diff(mf_weights))
+write_value("MF-VN LTP constant", mfvn_ltp_constant)
 
 # Plot
 fig = plt.figure(figsize=(6, 6), dpi=400)
@@ -88,7 +89,7 @@ F = Figure(
           yticks=True, markersize=2, xlim=(0, runtime)),
 )
 
-plt.savefig("figures/vn_single_potentiation.png", dpi=400)
+plt.savefig("figures/vn_potentiation_collection.png", dpi=400)
 
 thresh = 0.001
 assert np.all(np.isclose(mf_weights,

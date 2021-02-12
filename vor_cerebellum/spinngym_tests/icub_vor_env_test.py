@@ -20,15 +20,7 @@ perfect_eye_vel = np.concatenate((head_vel[500:], head_vel[:500]))
 
 error_window_size = 10  # ms
 npc_limit = 50
-input_spike_times = [[] for _ in range(input_size)]
-
-for i in range(5):
-    input_spike_times[i * 2] = [250 + (10 * 2 * i) for _ in range(1)]
-    input_spike_times[2 * i + 1] = [500 + (10 * (2 * i + 1)) for _ in range(1)]
-    input_spike_times[50 + i * 2] = [750 + (10 * 2 * i) for _ in range(10 + i)]
-    input_spike_times[100 + 2 * i + 1] = [1000 + (10 * (2 * i + 1)) for _ in range(10 + i)]
-    input_spike_times[150 + i * 2] = [1250 + (10 * 2 * i) for _ in range(100 + i)]
-    input_spike_times[150 + 2 * i + 1] = [1500 + (10 * (2 * i + 1)) for _ in range(100 + i)]
+input_spike_times = [runtime+1]  # This currently can be empty. It raises an assertion error
 
 # Setup
 p.setup(timestep=1.0)
@@ -97,6 +89,6 @@ plot_results(results_dict=results, simulation_parameters=simulation_parameters,
              all_spikes={
                  'purkinje': np.empty([0, 2])
              },
-             name="figures/spinngym_icub_vor_test_200_inputs")
+             name="figures/spinngym_icub_vor_test_no_movement")
 
 print("Done")
