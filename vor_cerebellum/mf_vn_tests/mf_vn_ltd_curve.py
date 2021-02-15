@@ -14,7 +14,8 @@ from vor_cerebellum.parameters import (mfvn_min_weight, mfvn_max_weight,
                                        mfvn_beta, mfvn_sigma,
                                        mfvn_plasticity_delay,
                                        mfvn_ltd_constant,
-                                       rbls, neuron_params)
+                                       rbls, scaling_factor,
+                                       vn_neuron_params)
 
 runtime = 300
 n_timesteps = 200
@@ -40,10 +41,11 @@ all_mf_spike_times = []
 
 for curr_timestep_diff in range(n_timesteps):
     vn_cell = sim.Population(1,  # number of neurons
-                             sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
+                             sim.extra_models.IFCondExpCerebellum(**vn_neuron_params),  # Neuron model
                              label="VN" + str(curr_timestep_diff),
                              additional_parameters={"rb_left_shifts": rbls['vn']}
                              )
+    vn_cell.initialize(v=vn_neuron_params['v_rest'])
 
     # Spike source to send spike via synapse
     mf_spike_times = [curr_timestep_diff, final_mf_spike_time]
@@ -92,7 +94,7 @@ for i in range(n_timesteps):
 
 pc_vn_synapse_weight = pc_vn_synapse.get('weight', 'list', with_address=False)
 
-connection_strength = np.asarray(final_connectivity).ravel()
+connection_strength = np.asarray(final_connectivity).ravel() / scaling_factor
 recorded_pc_spikes = np.asarray(final_input_spikes)
 
 sim.end()
@@ -103,10 +105,10 @@ assert np.all(all_mf_spike_times[:, 1] == final_mf_spike_time)
 assert recorded_pc_spikes.shape[1] == 2
 assert np.all(recorded_pc_spikes[:, :, 1][:, 1] == final_mf_spike_time)
 
-write_header("pf-PC LTD Curve")
+write_header("MF-VN LTD Curve")
 write_value("PC-VN weight", pc_vn_synapse_weight)
-write_value("Initial MF-VN weight", mfvn_initial_weight)
-write_value("MF-VN constant LTP", mfvn_ltp_constant)
+write_value("Initial MF-VN weight", mfvn_initial_weight / scaling_factor)
+write_value("MF-VN constant LTP", mfvn_ltp_constant / scaling_factor)
 write_value("MF-VN LTD scaling constant", mfvn_ltd_constant)
 
 voltage_matrix = np.ones((n_timesteps, runtime)) * np.nan
@@ -114,9 +116,9 @@ packet_matrix = np.ones((n_timesteps, runtime)) * np.nan
 gsyn_exc_matrix = np.ones((n_timesteps, runtime)) * np.nan
 
 for i, block in enumerate(final_recordings):
-    voltage_matrix[i] = np.array(block.filter(name='v')).ravel()
+    voltage_matrix[i] = np.array(block.filter(name='v')).ravel() / scaling_factor
     packet_matrix[i] = np.array(block.filter(name='packets-per-timestep')).ravel()
-    gsyn_exc_matrix[i] = np.array(block.filter(name='gsyn_exc')).ravel()
+    gsyn_exc_matrix[i] = np.array(block.filter(name='gsyn_exc')).ravel() / scaling_factor
 
 f = plt.figure(1, figsize=(12, 9), dpi=500)
 plt.close(f)

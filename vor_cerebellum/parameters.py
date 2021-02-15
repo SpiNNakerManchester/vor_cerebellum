@@ -7,6 +7,9 @@ H_RATE = 20
 
 # Units used in PyNN simulations: http://neuralensemble.org/docs/PyNN/units.html
 
+power = int(0)
+scaling_factor = 2 ** float(power)
+
 # Ring buffer left shifts (RB LS)
 rbls = {
     'mossy_fibres': None,
@@ -19,48 +22,48 @@ rbls = {
 
 # Neuron parameters
 neuron_params = {
-    "v_thresh": -50,
-    "v_reset": -70,
-    "v_rest": -65,
-    "i_offset": 0  # DC input
+    "v_thresh": -50 * scaling_factor,
+    "v_reset": -70 * scaling_factor,
+    "v_rest": -65 * scaling_factor,
+    "i_offset": 0 * scaling_factor  # DC input
 }
 
 # Neuron parameters PC
 pc_neuron_params = {
     "cm": 1.0,
-    "v_thresh": -50,
-    "v_reset": -70,
-    "v_rest": -65,
-    "i_offset": 0
+    "v_thresh": -50 * scaling_factor,
+    "v_reset": -70 * scaling_factor,
+    "v_rest": -65 * scaling_factor,
+    "i_offset": 0 * scaling_factor
 }
 
 # Neuron parameters
 vn_neuron_params = {
-    "cm": 1.0,
-    "v_thresh": -50,
-    "v_reset": -70,
-    "v_rest": -65,
-    "i_offset": 0
+    "cm": 1.0 * scaling_factor,
+    "v_thresh": -50 * scaling_factor,
+    "v_reset": -70 * scaling_factor,
+    "v_rest": -65 * scaling_factor,
+    "i_offset": 0 * scaling_factor
 }
 
 # PF-PC learning parameters
-pfpc_min_weight = 0
-pfpc_max_weight = 3.0e-3  # 0.001  # setting this too high will silence VN too much.
-pfpc_initial_weight = 5.0e-4  # pfpc_max_weight  # 0.0005
+pfpc_min_weight = 0 * scaling_factor
+pfpc_max_weight = 2.9e-3 * scaling_factor  # 0.001  # setting this too high will silence VN too much.
+pfpc_initial_weight = 5.0e-4 * scaling_factor  # pfpc_max_weight  # 0.0005
 pfpc_ltp_constant = pfpc_max_weight / 50.  # 2**(-15 + 6) / (2**10)  # 0.00005
 pfpc_ltd_constant = 0.8
 pfpc_t_peak = 100  # ms
-pfpc_plasticity_delay = 4  # ms
+pfpc_plasticity_delay = 1.0  # ms
 
 # MF-VN learning parameters
-mfvn_min_weight = 0
-mfvn_max_weight = 1.25e-3  # 0.001
-mfvn_initial_weight = 1.0e-4  # 0.0005
+mfvn_min_weight = 0 * scaling_factor
+mfvn_max_weight = 1.25e-3 * scaling_factor  # 0.001
+mfvn_initial_weight = 1.0e-4 * scaling_factor  # 0.0005
 mfvn_ltp_constant = mfvn_max_weight / 50.  # 0.0005  # 0.00005
-mfvn_ltd_constant = 1.0
+mfvn_ltd_constant = 0.8
 mfvn_beta = 11
 mfvn_sigma = 201
-mfvn_plasticity_delay = 4  # ms
+mfvn_plasticity_delay = 1.0  # ms
 
 # Neurons
 # Network parameters

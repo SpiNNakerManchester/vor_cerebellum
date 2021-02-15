@@ -10,9 +10,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pfpc_ltp_constant, pfpc_t_peak,
-                                       rbls, neuron_params,
+                                       rbls,
                                        pfpc_initial_weight,
-                                       pfpc_ltd_constant
+                                       pfpc_ltd_constant,
+                                       pc_neuron_params, scaling_factor
                                        )
 
 runtime = 300
@@ -39,10 +40,11 @@ grc_spike_times = []
 
 for curr_timestep_diff in range(n_timesteps):
     purkinje_cell = p.Population(1,  # number of neurons
-                                 p.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
+                                 p.extra_models.IFCondExpCerebellum(**pc_neuron_params),  # Neuron model
                                  label="PC" + str(curr_timestep_diff),
                                  additional_parameters={"rb_left_shifts": rbls['purkinje']}
                                  )
+    purkinje_cell.initialize(v=pc_neuron_params['v_rest'])
 
     # Spike source to send spike via synapse
     pf_spike_times = [curr_timestep_diff, final_grc_spike_time]
@@ -90,7 +92,7 @@ for i in range(n_timesteps):
 
 cf_synapse_weight = synapse.get('weight', 'list', with_address=False)
 
-connection_strength = np.asarray(final_connectivity).ravel()
+connection_strength = np.asarray(final_connectivity).ravel() / scaling_factor
 grc_spikes = np.asarray(final_input_spikes)
 
 p.end()
@@ -103,8 +105,8 @@ assert np.all(grc_spikes[:, :, 1][:, 1] == final_grc_spike_time)
 
 write_header("pf-PC LTD Curve")
 write_value("CF-PC weight", cf_synapse_weight)
-write_value("Initial pf-PC weight", pfpc_initial_weight)
-write_value("pf-PC constant LTP", pfpc_ltp_constant)
+write_value("Initial pf-PC weight", pfpc_initial_weight / scaling_factor)
+write_value("pf-PC constant LTP", pfpc_ltp_constant / scaling_factor)
 write_value("pf-PC LTD scaling constant", pfpc_ltd_constant)
 
 voltage_matrix = np.ones((n_timesteps, runtime)) * np.nan
