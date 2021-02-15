@@ -31,7 +31,7 @@ pc_spike_times = [n_timesteps]
 purkinje_cell = sim.Population(1,  # number of sources
                                sim.SpikeSourceArray,  # source type
                                {'spike_times': pc_spike_times},  # source spike times
-                               label="CF"  # identifier
+                               label="PC"  # identifier
                                )
 
 final_mf_spike_time = n_timesteps + 50
@@ -71,7 +71,7 @@ for curr_timestep_diff in range(n_timesteps):
         synapse_type=mfvn_plas, receptor_type="excitatory")
     all_projections.append(synapse_mfvn)
 
-    # Create projection from CF to PC
+    # Create projection from PC to VN
     pc_vn_synapse = sim.Projection(
         purkinje_cell, vn_cell, sim.OneToOneConnector(),
         sim.StaticSynapse(weight=0.0, delay=1), receptor_type="excitatory")
@@ -104,7 +104,7 @@ assert recorded_pc_spikes.shape[1] == 2
 assert np.all(recorded_pc_spikes[:, :, 1][:, 1] == final_mf_spike_time)
 
 write_header("pf-PC LTD Curve")
-write_value("CF-PC weight", pc_vn_synapse_weight)
+write_value("PC-VN weight", pc_vn_synapse_weight)
 write_value("Initial MF-VN weight", mfvn_initial_weight)
 write_value("MF-VN constant LTP", mfvn_ltp_constant)
 write_value("MF-VN LTD scaling constant", mfvn_ltd_constant)
