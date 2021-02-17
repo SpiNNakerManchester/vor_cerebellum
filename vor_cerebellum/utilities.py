@@ -97,6 +97,12 @@ COMMON_DISPLAY_NAMES = {
     'mf_vn': "MF-VN",
     'cf_pc': "CF-PC",
     'mf_goc': "MF-GoC",
+    'vn': 'VN',
+    'grc': 'GrC',
+    'goc': 'GoC',
+    'cf': 'CF',
+    'mf': 'MF',
+    'pc': 'PC',
 }
 
 
@@ -805,8 +811,6 @@ def analyse_run(results_file, fig_folder, suffix):
                  all_spikes=all_spikes,
                  name=os.path.join(fig_folder, "cerebellum_icub_full" + suffix))
 
-
-
     # unpacking results
     errors = icub_snapshots[i]['errors']
     l_counts = np.asarray(icub_snapshots[i]['l_counts']).ravel()
@@ -860,7 +864,7 @@ def analyse_run(results_file, fig_folder, suffix):
     # Plot at 3 times during the simulation
     f, axes = plt.subplots(1, 3,
                            figsize=(14, 10), sharey='row', sharex='row', dpi=400)
-    periods = [0, reshaped_error.shape[0] // 2, reshaped_error.shape[0]-1]
+    periods = [0, reshaped_error.shape[0] // 2, reshaped_error.shape[0] - 1]
 
     for index, curr_ax in enumerate(axes):
         curr_errors = reshaped_error[periods[index]]
@@ -913,8 +917,8 @@ def analyse_run(results_file, fig_folder, suffix):
     # Looking at weights
     write_header("Looking at weights to see if they are being optimised well")
     for proj, pre_pop, post_pop in zip(['pf_pc', 'mf_vn'],
-                              ['granule', 'mossy_fibres'],
-                              ['purkinje', 'vn']):
+                                       ['granule', 'mossy_fibres'],
+                                       ['purkinje', 'vn']):
         write_value("proj", proj)
         write_value("pre_pop", pre_pop)
         write_value("post_pop", post_pop)
@@ -946,7 +950,7 @@ def analyse_run(results_file, fig_folder, suffix):
         ax.set_title(use_display_name(proj))
         save_figure(plt, os.path.join(fig_folder,
                                       "{}_weight_matrix{}".format(proj, suffix)),
-                                            extensions=['.png', '.pdf'])
+                    extensions=['.png', '.pdf'])
         plt.close(f)
 
         # Delay matrix
@@ -992,10 +996,6 @@ def analyse_run(results_file, fig_folder, suffix):
                     extensions=['.png', ])
         plt.close(f)
         write_sep()
-
-
-
-
 
 
 def build_network_for_training():

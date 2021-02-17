@@ -20,6 +20,7 @@ from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pfpc_ltp_constant, pfpc_t_peak,
                                        pfpc_ltd_constant,
                                        pc_neuron_params)
+from vor_cerebellum.provenance_analysis import provenance_analysis
 from vor_cerebellum.utilities import *
 # Imports for SpiNNGym env
 import spinn_gym as gym
@@ -427,6 +428,19 @@ simulator = get_simulator()
 # Enable relevant recordings
 enable_recordings_for(all_populations, full_recordings=args.full_recordings)
 
+# provenance gathering
+simulator = get_simulator()
+x = args.filename or "cerebellum_experiment"
+
+structured_provenance_filename = os.path.join(
+    result_dir,
+    "{}_{}_structured_provenance.npz".format(x, suffix))
+
+if os.path.exists(structured_provenance_filename):
+    os.remove(structured_provenance_filename)
+
+simulator.structured_provenance_filename = structured_provenance_filename
+
 # ============================  Set up constraints ============================
 
 for pop_name, constraint in per_pop_neurons_per_core_constraint.items():
@@ -536,6 +550,16 @@ else:
 if current_error:
     filename = "error_" + filename
 
+# Try to read the structured provenance
+try:
+    struct_prov = np.load(structured_provenance_filename, allow_pickle=True)
+except:
+    struct_prov = {}
+    print("Failed to retrieve structured provenance")
+    traceback.print_exc()
+
+to_save_struct_prov = {k: v for k, v in struct_prov.items()}
+
 # Save results to file in [by default] the `results/' directory
 results_file = os.path.join(result_dir, filename)
 np.savez_compressed(results_file,
@@ -551,7 +575,9 @@ np.savez_compressed(results_file,
                     conn_params=CONNECTIVITY_MAP,
                     cell_params=neuron_params,
                     per_pop_neurons_per_core_constraint=per_pop_neurons_per_core_constraint,
-                    icub_snapshots=icub_snapshots
+                    icub_snapshots=icub_snapshots,
+                    structured_provenance=to_save_struct_prov,
+                    structured_provenance_filename=structured_provenance_filename
                     )
 
 # Report time taken
@@ -562,6 +588,9 @@ print("Total time elapsed -- " + str(total_time))
 analyse_run(results_file=results_file,
             fig_folder=fig_folder + filename,
             suffix=suffix)
+
+provenance_analysis(structured_provenance_filename,
+                    fig_folder=fig_folder + filename + "/provenance_figures")
 
 # Report time taken
 print("Results stored in  -- " + filename)
