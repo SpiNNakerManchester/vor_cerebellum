@@ -218,7 +218,7 @@ def plot_2D_map_for_poi(in_file, selected_sim,
                         ((row.p // magic_constant) % magic_constant))
             y_pos = int(magic_constant * row.y +
                         (row.p % magic_constant))
-            map[x_pos, y_pos] = row.prov_value
+            map[y_pos, x_pos] = row.prov_value
 
         # crop_point = np.max(np.max(np.argwhere(np.isfinite(map)), axis=0))
         f = plt.figure(1, figsize=(9, 9), dpi=500)
@@ -300,13 +300,11 @@ def plot_router_provenance(in_file, selected_sim, router_pop_names,
 
         for row_index, row in filtered_placement.iterrows():
             map[
-            int(magic_constant * row.x):int(magic_constant * (row.x + 1)),
-            int(magic_constant * row.y):int(magic_constant * (row.y + 1))
+            int(magic_constant * row.y):int(magic_constant * (row.y + 1)),
+            int(magic_constant * row.x):int(magic_constant * (row.x + 1))
             ] = row.prov_value
 
-        # crop_point = np.max(np.max(np.argwhere(np.isfinite(map)), axis=0))
         f = plt.figure(1, figsize=(9, 9), dpi=500)
-        # plt.matshow(map[:crop_point, :crop_point], interpolation='none')
         im = plt.imshow(map, interpolation='none',
                         cmap=plt.get_cmap('inferno'),
                         extent=[0, max_x, 0, max_y],
@@ -427,12 +425,10 @@ def plot_population_placement(collated_results, placements, fig_folder):
                             ((row.p // magic_constant) % magic_constant))
                 y_pos = int(magic_constant * row.y +
                             (row.p % magic_constant))
-                map[x_pos, y_pos] = index
+                map[y_pos, x_pos] = index
 
         uniques = np.unique(map[np.isfinite(map)]).astype(int)
-        # crop_point = np.max(np.max(np.argwhere(np.isfinite(map)), axis=0))
         f = plt.figure(1, figsize=(9, 9), dpi=500)
-        # plt.matshow(map[:crop_point, :crop_point], interpolation='none')
         im = plt.imshow(map, interpolation='none', vmin=0, vmax=n_plots,
                         cmap=plt.get_cmap('viridis', n_plots),
                         extent=[0, max_x, 0, max_y],
