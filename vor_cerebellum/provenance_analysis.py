@@ -68,7 +68,7 @@ def provenance_npz_analysis(in_file, fig_folder, run_no):
     pops.sort()
     types_of_provenance = prov['prov_name'].unique()
     prov_of_interest = [
-        # 'MAX_SPIKES_IN_A_TICK',
+        'MAX_SPIKES_IN_A_TICK',
         'Times_synaptic_weights_have_saturated',
         'late_packets',
         'Times_the_input_buffer_lost_packets',
