@@ -7,6 +7,7 @@ from pyNN.random import RandomDistribution, NumpyRNG
 import traceback
 import neo
 # general parameters
+from pacman.model.constraints.placer_constraints import RadialPlacementFromChipConstraint
 from vor_cerebellum.parameters import (CONNECTIVITY_MAP, rbls, neuron_params)
 # MF-VN params
 from vor_cerebellum.parameters import (mfvn_min_weight, mfvn_max_weight,
@@ -131,8 +132,8 @@ weight_dist_pfpc = RandomDistribution('uniform',
                                        pfpc_initial_weight * 1.2),
                                       rng=NumpyRNG(seed=24534))
 
-global_n_neurons_per_core = 50
-ss_neurons_per_core = 25
+global_n_neurons_per_core = 100
+ss_neurons_per_core = 10
 pressured_npc = 10
 per_pop_neurons_per_core_constraint = {
     'mossy_fibres': global_n_neurons_per_core,
@@ -140,7 +141,7 @@ per_pop_neurons_per_core_constraint = {
     'golgi': global_n_neurons_per_core,
     'purkinje': pressured_npc,
     'vn': pressured_npc,
-    'climbing_fibres': ss_neurons_per_core,
+    'climbing_fibres': 1,
 }
 
 sim.setup(timestep=1., min_delay=1, max_delay=15)
@@ -443,6 +444,15 @@ simulator.structured_provenance_filename = structured_provenance_filename
 
 # ============================  Set up constraints ============================
 
+# Hard-coding population placements for testing
+MF_population.set_constraint(RadialPlacementFromChipConstraint(0, 0))
+GC_population.set_constraint(RadialPlacementFromChipConstraint(2, 1))
+CF_population.set_constraint(RadialPlacementFromChipConstraint(5, 5))
+VN_population.set_constraint(RadialPlacementFromChipConstraint(4, 1))
+PC_population.set_constraint(RadialPlacementFromChipConstraint(2, 4))
+GOC_population.set_constraint(RadialPlacementFromChipConstraint(1, 2))
+icub_vor_env_pop.set_constraint(RadialPlacementFromChipConstraint(5, 3))
+
 for pop_name, constraint in per_pop_neurons_per_core_constraint.items():
     print("Setting NPC=", constraint, "for", pop_name)
     all_populations[pop_name].set_max_atoms_per_core(constraint)
@@ -589,8 +599,9 @@ analyse_run(results_file=results_file,
             fig_folder=fig_folder + filename,
             suffix=suffix)
 
-provenance_analysis(structured_provenance_filename,
-                    fig_folder=fig_folder + filename + "/provenance_figures")
+if not args.no_provenance:
+    provenance_analysis(structured_provenance_filename,
+                        fig_folder=fig_folder + filename + "/provenance_figures")
 
 # Report time taken
 print("Results stored in  -- " + filename)

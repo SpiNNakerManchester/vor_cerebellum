@@ -181,6 +181,9 @@ parser.add_argument('--experiment', type=str, choices=["zero", "constant", "bist
                          "-- default {}".format("bistate"),
                     default="bistate")
 
+parser.add_argument('--no_provenance', action="store_true",
+                    help='Disable provenance analysis.')
+
 args = parser.parse_args()
 from pprint import pprint as pp
 

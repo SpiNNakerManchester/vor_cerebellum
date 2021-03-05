@@ -7,6 +7,7 @@ from pyNN.random import RandomDistribution, NumpyRNG
 import traceback
 import neo
 # general parameters
+from pacman.model.constraints.placer_constraints import RadialPlacementFromChipConstraint
 from vor_cerebellum.parameters import (CONNECTIVITY_MAP, rbls, neuron_params)
 # MF-VN params
 from vor_cerebellum.parameters import (mfvn_min_weight, mfvn_max_weight,
@@ -131,8 +132,8 @@ weight_dist_pfpc = RandomDistribution('uniform',
                                        pfpc_initial_weight * 1.2),
                                       rng=NumpyRNG(seed=24534))
 
-global_n_neurons_per_core = 50
-ss_neurons_per_core = 25
+global_n_neurons_per_core = 100
+ss_neurons_per_core = 10
 pressured_npc = 10
 per_pop_neurons_per_core_constraint = {
     'mossy_fibres': global_n_neurons_per_core,
@@ -140,7 +141,7 @@ per_pop_neurons_per_core_constraint = {
     'golgi': global_n_neurons_per_core,
     'purkinje': pressured_npc,
     'vn': pressured_npc,
-    'climbing_fibres': ss_neurons_per_core,
+    'climbing_fibres': 1,
 }
 
 sim.setup(timestep=1., min_delay=1, max_delay=15)
@@ -197,7 +198,6 @@ MF_population = sim.Population(num_MF_neurons,  # number of sources
                                label="MF",
                                additional_parameters={'seed': 24534}
                                )
-
 all_populations["mossy_fibres"] = MF_population
 
 # Create GOC population
@@ -235,6 +235,7 @@ CF_population = sim.Population(num_CF_neurons,  # number of sources
                                label="CF",
                                additional_parameters={'seed': 24534}
                                )
+
 all_populations["climbing_fibres"] = CF_population
 
 ###############################################################################
@@ -432,6 +433,14 @@ icub_vor_env_model = gym.ICubVorEnv(
 )
 icub_vor_env_pop = sim.Population(ICUB_VOR_VENV_POP_SIZE, icub_vor_env_model)
 
+# Hard-coding population placements for testing
+MF_population.set_constraint(RadialPlacementFromChipConstraint(0, 0))
+GC_population.set_constraint(RadialPlacementFromChipConstraint(2, 1))
+CF_population.set_constraint(RadialPlacementFromChipConstraint(5, 5))
+VN_population.set_constraint(RadialPlacementFromChipConstraint(4, 1))
+PC_population.set_constraint(RadialPlacementFromChipConstraint(2, 4))
+GOC_population.set_constraint(RadialPlacementFromChipConstraint(1, 2))
+icub_vor_env_pop.set_constraint(RadialPlacementFromChipConstraint(5, 3))
 # Input -> ICubVorEnv projection
 vn_to_icub = sim.Projection(VN_population, icub_vor_env_pop, sim.AllToAllConnector(),
                             label="VN-iCub")
@@ -470,7 +479,6 @@ final_connectivity = {k: [] for k in all_projections.keys()}
 icub_snapshots = []
 
 # provenance gathering
-simulator = get_simulator()
 x = args.filename or "target_reaching"
 
 structured_provenance_filename = os.path.join(
@@ -609,8 +617,9 @@ analyse_run(results_file=results_file,
             fig_folder=fig_folder + filename,
             suffix=suffix)
 
-provenance_analysis(structured_provenance_filename,
-                    fig_folder=fig_folder + filename + "/provenance_figures")
+if not args.no_provenance:
+    provenance_analysis(structured_provenance_filename,
+                        fig_folder=fig_folder + filename + "/provenance_figures")
 
 # Report time taken
 print("Results stored in  -- " + filename)
