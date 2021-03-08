@@ -17,6 +17,16 @@ The system is shown to perform the task in simulated and physical environments.
  
  # Installation
  
+ This installation assumes the existence of either sPyNNaker or NEST, for brevity. 
+For installation instructions for NEST, please follow official directions. For SpiNNaker, 3 shell scripts are provided
+for quick installation.
+
+A complete installation (assuming no errors) could be done by running (in this order):
+
+```bash
+./install.sh && ./setup_develop.sh && ./automatic_make.sh
+```
+ 
  The software package can be installed in a local virtual environment. 
 The following can be run inside the unarchived folder to install the package:
 
@@ -30,9 +40,8 @@ or
 pip install .
 ```
 
-This installation assumes the existence of either sPyNNaker or NEST, for brevity. 
-For installation instructions for those, please follow the official directions provided by each package.
 
 # Use
 
-Watch this space...
+Each experiment script is stand-alone. However, full-scale experiments can have arguments passed to them via the 
+argparser. 
