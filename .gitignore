@@ -148,3 +148,11 @@ cython_debug/
 *.pdf
 *.out
 
+# sPyNNaker reports and generated files
+*application_generated_data_files/
+*reports/
+
+.project
+.settings/
+.pydevproject
+**/*npz

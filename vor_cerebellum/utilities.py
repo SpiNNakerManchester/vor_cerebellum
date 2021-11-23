@@ -178,7 +178,7 @@ def get_error(icub_vor_env_pop, simulator):
     b_vertex = icub_vor_env_pop._vertex
     error = b_vertex.get_data(
         'error', simulator.no_machine_time_steps, simulator.placements,
-        simulator.buffer_manager, simulator.machine_time_step)
+        simulator.buffer_manager)
     return error.tolist()
 
 
@@ -186,7 +186,7 @@ def get_l_count(icub_vor_env_pop, simulator):
     b_vertex = icub_vor_env_pop._vertex
     left_count = b_vertex.get_data(
         'l_count', simulator.no_machine_time_steps, simulator.placements,
-        simulator.buffer_manager, simulator.machine_time_step)
+        simulator.buffer_manager)
     return left_count.tolist()
 
 
@@ -194,7 +194,7 @@ def get_r_count(icub_vor_env_pop, simulator):
     b_vertex = icub_vor_env_pop._vertex
     right_count = b_vertex.get_data(
         'r_count', simulator.no_machine_time_steps, simulator.placements,
-        simulator.buffer_manager, simulator.machine_time_step)
+        simulator.buffer_manager)
     return right_count.tolist()
 
 
@@ -202,7 +202,7 @@ def get_eye_pos(icub_vor_env_pop, simulator):
     b_vertex = icub_vor_env_pop._vertex
     eye_positions = b_vertex.get_data(
         'eye_pos', simulator.no_machine_time_steps, simulator.placements,
-        simulator.buffer_manager, simulator.machine_time_step)
+        simulator.buffer_manager)
     return eye_positions.tolist()
 
 
@@ -210,7 +210,7 @@ def get_eye_vel(icub_vor_env_pop, simulator):
     b_vertex = icub_vor_env_pop._vertex
     eye_velocities = b_vertex.get_data(
         'eye_vel', simulator.no_machine_time_steps, simulator.placements,
-        simulator.buffer_manager, simulator.machine_time_step)
+        simulator.buffer_manager)
     return eye_velocities.tolist()
 
 
@@ -668,7 +668,8 @@ def retrieve_all_other_recordings(all_populations, full_recordings):
         except:
             print("Failed to retrieve packets-per-timestep")
 
-        neo_all_recordings[label] = pop.get_data('all')
+        neo_all_recordings[label] = pop.get_data(  # 'all')
+            ['v', 'spikes', 'gsyn_exc', 'gsyn_inh'])
 
     return other_recordings, neo_all_recordings
 

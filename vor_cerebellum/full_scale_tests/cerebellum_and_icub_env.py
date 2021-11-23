@@ -401,9 +401,11 @@ sim_total_time = end_time - sim_start_time
 
 MF_spikes = MF_population.get_data('spikes')
 CF_spikes = CF_population.get_data('spikes')
-GC_spikes = GC_population.get_data('all')
+# GC_spikes = GC_population.get_data('all')
+GC_spikes = GC_population.get_data(['v', 'spikes', 'gsyn_exc', 'gsyn_inh'])
 GOC_spikes = GOC_population.get_data('spikes')
-VN_spikes = VN_population.get_data('all')  # VN_population.get_data('spikes')
+# VN_spikes = VN_population.get_data('all')  # VN_population.get_data('spikes')
+VN_spikes = VN_population.get_data(['v', 'spikes', 'gsyn_exc', 'gsyn_inh'])
 PC_spikes = PC_population.get_data('spikes')
 
 mfvn_weights = mf_vn_connections.get('weight', 'list', with_address=False)
@@ -658,10 +660,12 @@ save_figure(plt, os.path.join(fig_folder, "VN_transfer_func" + suffix),
 
 # plot the data from the ICubVorEnv pop
 plot_results(results_dict=results, simulation_parameters=simulation_parameters,
-             name="figures/cerebellum_icub_first_10k", xlim=[0, 10000])
+             name="figures/cerebellum_icub_first_10k", xlim=[0, 10000],
+             all_spikes=all_spikes)
 
 plot_results(results_dict=results, simulation_parameters=simulation_parameters,
-             name="figures/cerebellum_icub_last_10k", xlim=[runtime-10000, runtime])
+             name="figures/cerebellum_icub_last_10k", xlim=[runtime-10000, runtime],
+             all_spikes=all_spikes)
 
 
 # Report time taken
