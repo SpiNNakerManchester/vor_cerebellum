@@ -7,6 +7,10 @@ from numpy.polynomial.polynomial import Polynomial
 from matplotlib.ticker import MultipleLocator
 import traceback
 
+from spinn_front_end_common.utilities.globals_variables import (
+    provenance_file_path)
+from spinn_front_end_common.interface.provenance import ProvenanceReader
+
 
 def extract_per_pop_placements(df, pops):
     placement_results = {}
@@ -84,12 +88,14 @@ def provenance_npz_analysis(in_file, fig_folder, run_no):
     results = {k: None for k in types_of_provenance}
     # TODO report number of neurons to make sure the networks is correct
     write_short_msg("DETECTED POPULATIONS", pops)
+    print("prov is: ", prov)
 
     for type_of_prov in types_of_provenance:
         rep = True if type_of_prov in prov_of_interest else False
         results[type_of_prov] = extract_per_pop_info(prov, type_of_prov, pops,
                                                      report=rep)
     placements = extract_per_pop_placements(prov, pops)
+    print('placements: ', placements)
     return results, types_of_provenance, prov_of_interest, placements
 
 
@@ -378,11 +384,21 @@ def plot_population_placement(collated_results, placements, fig_folder):
     write_header("PLOTTING MAPS")
     sorted_key_list = list(collated_results.keys())
     sorted_key_list.sort()
+    print("sorted_key_list: ", sorted_key_list)
     for selected_sim in sorted_key_list:
         filtered_placement = \
             placements[selected_sim]
         # try:
-        router_provenance = filtered_placement['router_provenance']
+        print("filtered_placement, selected_sim: ",
+              filtered_placement, selected_sim)
+        # router_provenance = filtered_placement['router_provenance']
+
+        # can we get router_provenance from the database?
+        # placements is 0... so is this router(0, 0)?
+        pr = ProvenanceReader(os.path.join(
+            provenance_file_path(), "provenance.sqlite3"))
+        router_provenance = pr.get_provenance_for_router(0, 0)
+        print("router_provenance: ", router_provenance)
 
         placements_per_pop = {x: filtered_placement[x]
                               for x in filtered_placement.keys()
