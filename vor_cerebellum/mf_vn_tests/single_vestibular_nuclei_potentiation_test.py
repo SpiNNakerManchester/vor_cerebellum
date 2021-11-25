@@ -53,7 +53,8 @@ for i in range(no_runs):
     mf_weights.append(synapse_mfvn.get('weight', 'list', with_address=False))
 
 mossy_fibre_src_spikes = mossy_fibre_src.get_data('spikes')
-vestibular_neuclei_data = vestibular_neuclei.get_data()
+vestibular_neuclei_data = vestibular_neuclei.get_data(
+    ['v', 'spikes', 'gsyn_exc'])
 sim.end()
 
 mf_weights = np.asarray(mf_weights).ravel()
@@ -92,6 +93,8 @@ F = Figure(
 plt.savefig("figures/vn_potentiation_collection.png", dpi=400)
 
 thresh = 0.001
+print(mf_weights)
+print(np.arange(no_runs) * mfvn_ltp_constant)
 assert np.all(np.isclose(mf_weights,
                          np.arange(no_runs) * mfvn_ltp_constant,
                          thresh)), "MF_VN weights are not within {} of the correct value".format(thresh)
