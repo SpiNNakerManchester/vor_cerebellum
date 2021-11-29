@@ -21,7 +21,8 @@ from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pfpc_ltp_constant, pfpc_t_peak,
                                        pfpc_ltd_constant,
                                        pc_neuron_params)
-from vor_cerebellum.provenance_analysis import provenance_analysis
+from vor_cerebellum.provenance_analysis import (
+    provenance_analysis, save_provenance_to_file_from_database)
 from vor_cerebellum.utilities import *
 # Imports for SpiNNGym env
 import spinn_gym as gym
@@ -489,11 +490,9 @@ sim_total_time = end_time - sim_start_time
 
 MF_spikes = MF_population.get_data('spikes')
 CF_spikes = CF_population.get_data('spikes')
-# GC_spikes = GC_population.get_data('all')
-GC_spikes = GC_population.get_data(['v', 'spikes', 'gsyn_exc', 'gsyn_inh'])
+GC_spikes = GC_population.get_data('all')
 GOC_spikes = GOC_population.get_data('spikes')
-# VN_spikes = VN_population.get_data('all')  # VN_population.get_data('spikes')
-VN_spikes = VN_population.get_data(['v', 'spikes', 'gsyn_exc', 'gsyn_inh'])
+VN_spikes = VN_population.get_data('all')  # VN_population.get_data('spikes')
 PC_spikes = PC_population.get_data('spikes')
 
 mfvn_weights = mf_vn_connections.get('weight', 'list', with_address=False)
@@ -561,6 +560,10 @@ else:
 
 if current_error:
     filename = "error_" + filename
+
+# this would be the best point to look at the database
+save_provenance_to_file_from_database(
+    structured_provenance_filename, simulator)
 
 # Try to read the structured provenance
 try:

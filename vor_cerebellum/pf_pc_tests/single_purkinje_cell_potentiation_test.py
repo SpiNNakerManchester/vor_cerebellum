@@ -53,7 +53,7 @@ for i in range(no_runs):
     pf_weights.append(synapse_pfpc.get('weight', 'list', with_address=False))
 
 granluar_cell_spikes = granular_cell.get_data('spikes')
-purkinje_data = purkinje_cell.get_data(['v', 'spikes', 'gsyn_exc'])
+purkinje_data = purkinje_cell.get_data()
 
 # Release and clean the machine
 sim.end()

@@ -53,8 +53,7 @@ for i in range(no_runs):
     mf_weights.append(synapse_mfvn.get('weight', 'list', with_address=False))
 
 mossy_fibre_src_spikes = mossy_fibre_src.get_data('spikes')
-vestibular_neuclei_data = vestibular_neuclei.get_data(
-    ['v', 'spikes', 'gsyn_exc'])
+vestibular_neuclei_data = vestibular_neuclei.get_data()
 sim.end()
 
 mf_weights = np.asarray(mf_weights).ravel()

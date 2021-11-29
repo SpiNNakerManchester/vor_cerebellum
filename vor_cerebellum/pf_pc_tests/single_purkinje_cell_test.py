@@ -1,4 +1,5 @@
 from __future__ import print_function
+import os
 import spynnaker8 as sim
 from pyNN.utility.plotting import Figure, Panel
 import matplotlib.pyplot as plt
@@ -6,6 +7,10 @@ from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pfpc_ltp_constant, pfpc_t_peak,
                                        pfpc_plasticity_delay, pfpc_initial_weight,
                                        rbls, neuron_params)
+from vor_cerebellum.provenance_analysis import (
+    provenance_analysis, save_provenance_to_file_from_database)
+from spinn_front_end_common.utilities.globals_variables import get_simulator
+
 
 sim.setup(1, min_delay=1, max_delay=15)  # simulation timestep (ms)
 runtime = 500
@@ -65,9 +70,18 @@ sim.run(runtime)
 
 granluar_cell_spikes = granular_cell.get_data('spikes')
 climbing_fibre_spikes = climbing_fibre.get_data('spikes')
-purkinje_data = purkinje_cell.get_data(['v', 'spikes', 'gsyn_exc'])
+purkinje_data = purkinje_cell.get_data()
 
 pf_weights = synapse_pfpc.get('weight', 'list', with_address=False)
+
+structured_provenance_filename = "single_pc_structured_provenance.npz"
+if os.path.exists(structured_provenance_filename):
+    os.remove(structured_provenance_filename)
+# this would be the best point to look at the database
+simulator = get_simulator()
+save_provenance_to_file_from_database(
+    structured_provenance_filename, simulator)
+
 sim.end()
 print("Final PF-PC weight", pf_weights)
 
@@ -96,5 +110,7 @@ F = Figure(
 )
 
 plt.savefig("figures/single_pc_test.png", dpi=400)
+
+provenance_analysis(structured_provenance_filename, "provenance_figures/")
 
 print("Done")
