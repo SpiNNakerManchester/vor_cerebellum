@@ -87,9 +87,9 @@ F = Figure(
 )
 plt.savefig("figures/pc_potentiation_collection.png", dpi=400)
 
-thresh = 0.001
-assert np.all(np.isclose(pf_weights,
-                         np.arange(no_runs) * pfpc_ltp_constant,
-                         thresh)), "PF-PC weights are not within {} of the correct value".format(thresh)
+thresh = 1e-05
+assert np.all(np.isclose(
+    pf_weights, np.arange(no_runs) * pfpc_ltp_constant, rtol=0.0, atol=thresh)
+    ), "PF-PC weights are not within {} of the correct value".format(thresh)
 
 print("Done")
