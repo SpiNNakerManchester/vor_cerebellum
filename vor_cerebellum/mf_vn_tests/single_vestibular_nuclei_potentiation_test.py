@@ -91,11 +91,11 @@ F = Figure(
 
 plt.savefig("figures/vn_potentiation_collection.png", dpi=400)
 
-thresh = 0.001
+thresh = 1e-05
 print(mf_weights)
 print(np.arange(no_runs) * mfvn_ltp_constant)
-assert np.all(np.isclose(mf_weights,
-                         np.arange(no_runs) * mfvn_ltp_constant,
-                         thresh)), "MF_VN weights are not within {} of the correct value".format(thresh)
+assert np.all(np.isclose(
+    mf_weights, np.arange(no_runs) * mfvn_ltp_constant, rtol=0.0, atol=thresh)
+    ), "MF_VN weights are not within {} of the correct value".format(thresh)
 
 print("Done")
