@@ -184,10 +184,13 @@ parser.add_argument('--experiment', type=str, choices=["zero", "constant", "bist
 parser.add_argument('--no_provenance', action="store_true",
                     help='Disable provenance analysis.')
 
-args = parser.parse_args()
+args, unknown = parser.parse_known_args()
 from pprint import pprint as pp
 
 print("=" * 80)
 print("Args")
 pp(vars(args))
+print("-" * 80)
+print("unknown args")
+print(unknown)
 print("-" * 80)

@@ -26,7 +26,8 @@ from vor_cerebellum.utilities import *
 import spinn_gym as gym
 from spinn_front_end_common.utilities.globals_variables import get_simulator
 from vor_cerebellum.vor_argparser import *
-from vor_cerebellum.provenance_analysis import provenance_analysis
+from vor_cerebellum.provenance_analysis import (
+    provenance_analysis, save_provenance_to_file_from_database)
 
 # Record SCRIPT start time (wall clock)
 start_time = plt.datetime.datetime.now()
@@ -455,7 +456,7 @@ simulator = get_simulator()
 # ============================  Set up recordings ============================
 
 # Enable relevant recordings
-enable_recordings_for(all_populations, full_recordings=args.full_recordings)
+enable_recordings_for(all_populations, full_recordings=True)  # args.full_recordings)
 
 # ============================  Set up constraints ============================
 
@@ -577,6 +578,10 @@ else:
     filename = "target_reaching_test" + str(suffix)
 if current_error:
     filename = "error_" + filename
+
+# this would be the best point to look at the database
+save_provenance_to_file_from_database(
+    structured_provenance_filename, simulator)
 
 # Try to read the structured provenance
 try:

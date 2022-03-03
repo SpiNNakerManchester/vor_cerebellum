@@ -112,6 +112,7 @@ sim.set_number_of_neurons_per_core(sim.extra_models.IFCondExpCerebellum, global_
 
 
 # Prepare variables once at beginning
+MAX_RATE = 600.0
 MAX_AMPLITUDE = 0.8
 RELATIVE_AMPLITUDE = 1.0
 _head_pos = []
@@ -137,7 +138,8 @@ MF_population = sim.Population(num_MF_neurons,  # number of sources
                                sim.SpikeSourcePoisson,  # source type
                                {'rate': sensorial_activity(_head_pos[0], _head_vel[0])[0]},  # source spike times
                                label="MF",
-                               additional_parameters={'seed': 24534}
+                               additional_parameters={'seed': 24534,
+                                                      'max_rate': MAX_RATE}
                                )
 
 all_populations["mossy_fibers"] = MF_population
@@ -179,7 +181,8 @@ CF_population = sim.Population(num_CF_neurons,  # number of sources
                                sim.SpikeSourcePoisson,  # source type
                                {'rate': error_activity(err, L_RATE, H_RATE)},  # source spike times
                                label="CFLayer",
-                               additional_parameters={'seed': 24534}
+                               additional_parameters={'seed': 24534,
+                                                      'max_rate': MAX_RATE}
                                )
 all_populations["climbing_fibers"] = CF_population
 
