@@ -140,9 +140,6 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# sPyNNaker.cfg
-*.cfg
-
 # figures
 *.png
 *.pdf
