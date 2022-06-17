@@ -4,7 +4,7 @@ MF-VN weights
 
 Check provenance to verify the correct number of spikes being counted.
 """
-import spynnaker8 as sim
+import pyNN.spiNNaker as sim
 from vor_cerebellum.utilities import *
 import matplotlib.pyplot as plt
 import numpy as np

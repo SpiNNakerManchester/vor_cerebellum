@@ -4,7 +4,7 @@ PF + CF on the PF-PC weights, i.e. the weights from GrC to PC.
 
 Check provenance to verify the correct number of spikes being counted.
 """
-import spynnaker8 as p
+import pyNN.spiNNaker as p
 from pyNN.utility.plotting import Figure, Panel
 import matplotlib.pyplot as plt
 from brian2.units import nS, uS

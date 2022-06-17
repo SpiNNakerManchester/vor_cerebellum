@@ -11,7 +11,7 @@ def_sim = str.lower(sys.argv[1])
 if def_sim in ["spinnaker", "spynnaker"]:
     try:
         # this might be deprecated soon
-        import spynnaker8 as sim
+        import pyNN.spiNNaker as sim
     except ImportError:
         import pyNN.spynnaker as sim
     spinnaker_sim = True

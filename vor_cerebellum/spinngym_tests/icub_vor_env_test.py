@@ -1,4 +1,4 @@
-import spynnaker8 as p
+import pyNN.spiNNaker as p
 import spinn_gym as gym
 from spinn_front_end_common.utilities.globals_variables import get_simulator
 from vor_cerebellum.utilities import *

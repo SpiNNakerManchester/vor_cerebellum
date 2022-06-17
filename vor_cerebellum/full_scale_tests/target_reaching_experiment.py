@@ -1,4 +1,4 @@
-import spynnaker8 as sim
+import pyNN.spiNNaker as sim
 
 from pyNN.utility.plotting import Figure, Panel
 from pyNN.random import RandomDistribution, NumpyRNG

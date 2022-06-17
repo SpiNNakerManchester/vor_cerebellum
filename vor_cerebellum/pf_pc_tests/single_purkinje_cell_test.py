@@ -1,6 +1,6 @@
 from __future__ import print_function
 import os
-import spynnaker8 as sim
+import pyNN.spiNNaker as sim
 from pyNN.utility.plotting import Figure, Panel
 import matplotlib.pyplot as plt
 from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,

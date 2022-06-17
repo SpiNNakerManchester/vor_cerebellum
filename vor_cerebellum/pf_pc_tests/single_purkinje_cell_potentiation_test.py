@@ -2,7 +2,7 @@
 LTP for PF-PC cells is done via a constant amount for each pre-synaptic spike. This scripts
 tests this behaviour on SpiNNaker.
 """
-import spynnaker8 as sim
+import pyNN.spiNNaker as sim
 from pyNN.utility.plotting import Figure, Panel
 from vor_cerebellum.utilities import *
 from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,

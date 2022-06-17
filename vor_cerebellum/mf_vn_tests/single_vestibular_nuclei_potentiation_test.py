@@ -1,5 +1,5 @@
 from __future__ import print_function
-import spynnaker8 as sim
+import pyNN.spiNNaker as sim
 from pyNN.utility.plotting import Figure, Panel
 from vor_cerebellum.utilities import *
 from vor_cerebellum.parameters import (mfvn_min_weight, mfvn_max_weight,
