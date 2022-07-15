@@ -7,7 +7,7 @@ from pyNN.random import RandomDistribution, NumpyRNG
 import traceback
 import neo
 # general parameters
-from pacman.model.constraints.placer_constraints import RadialPlacementFromChipConstraint
+#from pacman.model.constraints.placer_constraints import RadialPlacementFromChipConstraint
 from vor_cerebellum.parameters import (CONNECTIVITY_MAP, rbls, neuron_params)
 # MF-VN params
 from vor_cerebellum.parameters import (mfvn_min_weight, mfvn_max_weight,
@@ -446,13 +446,13 @@ simulator.structured_provenance_filename = structured_provenance_filename
 # ============================  Set up constraints ============================
 
 # Hard-coding population placements for testing
-MF_population.set_constraint(RadialPlacementFromChipConstraint(0, 0))
-GC_population.set_constraint(RadialPlacementFromChipConstraint(2, 1))
-CF_population.set_constraint(RadialPlacementFromChipConstraint(5, 5))
-VN_population.set_constraint(RadialPlacementFromChipConstraint(4, 1))
-PC_population.set_constraint(RadialPlacementFromChipConstraint(2, 4))
-GOC_population.set_constraint(RadialPlacementFromChipConstraint(1, 2))
-icub_vor_env_pop.set_constraint(RadialPlacementFromChipConstraint(5, 3))
+# MF_population.set_constraint(RadialPlacementFromChipConstraint(0, 0))
+# GC_population.set_constraint(RadialPlacementFromChipConstraint(2, 1))
+# CF_population.set_constraint(RadialPlacementFromChipConstraint(5, 5))
+# VN_population.set_constraint(RadialPlacementFromChipConstraint(4, 1))
+# PC_population.set_constraint(RadialPlacementFromChipConstraint(2, 4))
+# GOC_population.set_constraint(RadialPlacementFromChipConstraint(1, 2))
+# icub_vor_env_pop.set_constraint(RadialPlacementFromChipConstraint(5, 3))
 
 for pop_name, constraint in per_pop_neurons_per_core_constraint.items():
     print("Setting NPC=", constraint, "for", pop_name)

@@ -98,12 +98,12 @@ weight_dist_pfpc = RandomDistribution('uniform',
 global_n_neurons_per_core = 50
 ss_neurons_per_core = 25
 per_pop_neurons_per_core_constraint = {
-    'mossy_fibres': global_n_neurons_per_core,
+    'mossy_fibres': ss_neurons_per_core,
     'granule': global_n_neurons_per_core,
     'golgi': global_n_neurons_per_core,
     'purkinje': 10,
     'vn': 10,
-    'climbing_fibres': global_n_neurons_per_core,
+    'climbing_fibres': ss_neurons_per_core,
 }
 
 sim.setup(timestep=1., min_delay=1, max_delay=15)
