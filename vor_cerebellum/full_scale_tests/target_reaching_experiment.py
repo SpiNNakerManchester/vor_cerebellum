@@ -137,7 +137,7 @@ global_n_neurons_per_core = 100
 ss_neurons_per_core = 10
 pressured_npc = 10
 per_pop_neurons_per_core_constraint = {
-    'mossy_fibres': global_n_neurons_per_core,
+    'mossy_fibres': ss_neurons_per_core,
     'granule': global_n_neurons_per_core,
     'golgi': global_n_neurons_per_core,
     'purkinje': pressured_npc,
@@ -146,12 +146,12 @@ per_pop_neurons_per_core_constraint = {
 }
 
 sim.setup(timestep=1., min_delay=1, max_delay=15)
-sim.set_number_of_neurons_per_core(sim.SpikeSourcePoisson, ss_neurons_per_core)
-sim.set_number_of_neurons_per_core(sim.SpikeSourceArray, ss_neurons_per_core)
-sim.set_number_of_neurons_per_core(sim.IF_cond_exp, global_n_neurons_per_core)
-sim.set_number_of_neurons_per_core(sim.IF_curr_exp, 128)
-sim.set_number_of_neurons_per_core(sim.extra_models.IFCondExpCerebellum, global_n_neurons_per_core)
-sim.set_number_of_neurons_per_core(sim.extra_models.SpikeSourcePoissonVariable, ss_neurons_per_core)
+# sim.set_number_of_neurons_per_core(sim.SpikeSourcePoisson, ss_neurons_per_core)
+# sim.set_number_of_neurons_per_core(sim.SpikeSourceArray, ss_neurons_per_core)
+# sim.set_number_of_neurons_per_core(sim.IF_cond_exp, global_n_neurons_per_core)
+# sim.set_number_of_neurons_per_core(sim.IF_curr_exp, 128)
+# sim.set_number_of_neurons_per_core(sim.extra_models.IFCondExpCerebellum, global_n_neurons_per_core)
+# sim.set_number_of_neurons_per_core(sim.extra_models.SpikeSourcePoissonVariable, ss_neurons_per_core)
 
 # Sensorial Activity: input activity from vestibulus (will come from the head IMU, now it is a test bench)
 # We simulate the output of the head encoders with a sinusoidal function. Each "sensorial activity" value is derived from the

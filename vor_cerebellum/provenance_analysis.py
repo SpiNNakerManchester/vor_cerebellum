@@ -637,7 +637,7 @@ def plot_population_placement(collated_results, placements, fig_folder):
         cbar = plt.colorbar(im, cax=cax)
         cbar.set_label("Population")
         cbar.ax.set_yticks(uniques)
-        cbar.ax.set_yticklabels(plot_display_names)
+        # cbar.ax.set_yticklabels(plot_display_names)
 
         save_figure(plt, join(per_prov_dir,
                               "map_of_placements_for_run_{}".format(selected_sim)),
