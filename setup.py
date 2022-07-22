@@ -21,7 +21,8 @@ setup(
     author='Petrut Antoniu Bogdan',
     author_email='petrut.bogdan@manchester.ac.uk',
     description='Simulating a small scale Cerebellum model on '
-                'SpiNNaker with online learning to perform the vestibulo-ocular reflex',
+                'SpiNNaker with online learning to perform the '
+                'vestibulo-ocular reflex',
     # Requirements
     install_requires=install_requires,
     classifiers=[
@@ -35,7 +36,7 @@ setup(
 
         "Programming Language :: Python :: 3"
         "Programming Language :: Python :: 3.7"
-        
+
         "Topic :: Scientific/Engineering",
     ]
 )

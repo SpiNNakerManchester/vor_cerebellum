@@ -1,0 +1,13 @@
+**/*.colour_map
+**/*.col
+**/*.csv
+**/SpiNNUtils/**
+**/SpiNNMachine/**
+**/SpiNNMan/**
+**/PACMAN/**
+**/DataSpecification/**
+**/spalloc/**
+**/SpiNNFrontEndCommon/**
+**/sPyNNaker/**
+**/SpiNNGym/**
+**/.pylintrc
