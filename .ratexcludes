@@ -11,3 +11,5 @@
 **/sPyNNaker/**
 **/SpiNNGym/**
 **/.pylintrc
+**/vor_cerebellum/archived_original_tests/**
+**/vor_cerebellym/ipynbs/**
