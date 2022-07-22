@@ -20,7 +20,7 @@ Parameters used in the cerebellum experiments
 L_RATE = 2
 H_RATE = 20
 
-# Units used in PyNN simulations: http://neuralensemble.org/docs/PyNN/units.html
+# Units used in PyNN simulation: http://neuralensemble.org/docs/PyNN/units.html
 
 power = int(0)
 scaling_factor = 2 ** float(power)
@@ -63,7 +63,8 @@ vn_neuron_params = {
 
 # PF-PC learning parameters
 pfpc_min_weight = 0 * scaling_factor
-pfpc_max_weight = 2.9e-3 * scaling_factor  # 0.001  # setting this too high will silence VN too much.
+# setting this too high will silence VN too much.
+pfpc_max_weight = 2.9e-3 * scaling_factor  # 0.001
 pfpc_initial_weight = 5.0e-4 * scaling_factor  # pfpc_max_weight  # 0.0005
 pfpc_ltp_constant = pfpc_max_weight / 50.  # 2**(-15 + 6) / (2**10)  # 0.00005
 pfpc_ltd_constant = 0.8

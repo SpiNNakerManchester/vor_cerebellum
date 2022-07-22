@@ -20,9 +20,13 @@ PF + CF on the PF-PC weights, i.e. the weights from GrC to PC.
 Check provenance to verify the correct number of spikes being counted.
 """
 import pyNN.spiNNaker as p
-from vor_cerebellum.utilities import *
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+from spynnaker.pyNN.data import SpynnakerDataView
+
+from vor_cerebellum.utilities import (
+    write_header, write_value, make_axes_locatable, save_figure)
 from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pfpc_ltp_constant, pfpc_t_peak,
                                        rbls,
@@ -31,7 +35,7 @@ from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pc_neuron_params, scaling_factor
                                        )
 
-from spinn_front_end_common.utilities.globals_variables import get_simulator
+# from spinn_front_end_common.utilities.globals_variables import get_simulator
 
 runtime = 300
 n_timesteps = 200
@@ -47,7 +51,7 @@ p.setup(1)  # simulation timestep (ms)
 cf_spike_times = [n_timesteps]
 climbing_fibre = p.Population(1,  # number of sources
                               p.SpikeSourceArray,  # source type
-                              {'spike_times': cf_spike_times},  # source spike times
+                              {'spike_times': cf_spike_times},  # spike times
                               label="CF"  # identifier
                               )
 
@@ -57,9 +61,11 @@ grc_spike_times = []
 
 for curr_timestep_diff in range(n_timesteps):
     purkinje_cell = p.Population(1,  # number of neurons
-                                 p.extra_models.IFCondExpCerebellum(**pc_neuron_params),  # Neuron model
+                                 p.extra_models.IFCondExpCerebellum(
+                                     **pc_neuron_params),  # Neuron model
                                  label="PC" + str(curr_timestep_diff),
-                                 additional_parameters={"rb_left_shifts": rbls['purkinje']}
+                                 additional_parameters={
+                                     "rb_left_shifts": rbls['purkinje']}
                                  )
     purkinje_cell.initialize(v=pc_neuron_params['v_rest'])
 
@@ -69,18 +75,18 @@ for curr_timestep_diff in range(n_timesteps):
 
     granular_cell = p.Population(1,  # number of sources
                                  p.SpikeSourceArray,  # source type
-                                 {'spike_times': pf_spike_times},  # source spike times
-                                 label="GrC" + str(curr_timestep_diff)  # identifier
+                                 {'spike_times': pf_spike_times},  # times
+                                 label="GrC" + str(curr_timestep_diff)  # id
                                  )
     all_sources.append(granular_cell)
 
     # Create projection from GC to PC
     pfpc_plas = p.STDPMechanism(
-        timing_dependence=p.extra_models.TimingDependencePFPC(t_peak=pfpc_t_peak,
-                                                              alpha=pfpc_ltd_constant),
-        weight_dependence=p.extra_models.WeightDependencePFPC(w_min=pfpc_min_weight,
-                                                              w_max=pfpc_max_weight,
-                                                              pot_alpha=pfpc_ltp_constant),
+        timing_dependence=p.extra_models.TimingDependencePFPC(
+            t_peak=pfpc_t_peak, alpha=pfpc_ltd_constant),
+        weight_dependence=p.extra_models.WeightDependencePFPC(
+            w_min=pfpc_min_weight, w_max=pfpc_max_weight,
+            pot_alpha=pfpc_ltp_constant),
         weight=pfpc_initial_weight, delay=1)
 
     synapse_pfpc = p.Projection(
@@ -100,8 +106,9 @@ for curr_timestep_diff in range(n_timesteps):
 climbing_fibre.record('spikes')
 
 # test provenance gathering
-simulator = get_simulator()
-simulator.structured_provenance_filename = "pf_pc_ltd_structured_provenance.npz"
+# simulator = get_simulator()
+SpynnakerDataView.add_structured_provenance_filename(
+    "pf_pc_ltd_structured_provenance.npz")
 p.run(runtime)
 
 climbing_fibre_spikes = climbing_fibre.get_data('spikes')
@@ -109,7 +116,8 @@ climbing_fibre_spikes = climbing_fibre.get_data('spikes')
 for i in range(n_timesteps):
     final_recordings.append(all_populations[i].get_data())
     final_input_spikes.append(all_sources[i].spinnaker_get_data("spikes"))
-    final_connectivity.append(all_projections[i].get('weight', 'list', with_address=False))
+    final_connectivity.append(all_projections[i].get('weight', 'list',
+                                                     with_address=False))
 
 cf_synapse_weight = synapse.get('weight', 'list', with_address=False)
 
@@ -136,7 +144,8 @@ gsyn_exc_matrix = np.ones((n_timesteps, runtime)) * np.nan
 
 for i, block in enumerate(final_recordings):
     voltage_matrix[i] = np.array(block.filter(name='v')).ravel()
-    packet_matrix[i] = np.array(block.filter(name='packets-per-timestep')).ravel()
+    packet_matrix[i] = np.array(
+        block.filter(name='packets-per-timestep')).ravel()
     gsyn_exc_matrix[i] = np.array(block.filter(name='gsyn_exc')).ravel()
 
 f = plt.figure(1, figsize=(12, 9), dpi=500)

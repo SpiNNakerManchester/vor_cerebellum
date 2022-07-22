@@ -1,4 +1,3 @@
-import itertools
 # Copyright (c) 2019-2022 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
@@ -14,16 +13,22 @@ import itertools
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from vor_cerebellum.utilities import *
+from vor_cerebellum.utilities import (
+    write_line, write_header, write_short_msg, write_sep, use_display_name,
+    get_plot_order, make_axes_locatable, save_figure, color_for_index)
+import itertools
 import pandas as pd
-from os.path import join as join
-from numpy.polynomial.polynomial import Polynomial
+import numpy as np
+import os
+import pylab as plt
 from matplotlib.ticker import MultipleLocator
 import traceback
 
-from spinn_front_end_common.utilities.globals_variables import (
-    provenance_file_path)
+# from spinn_front_end_common.utilities.globals_variables import (
+#     provenance_file_path)
 from spinn_front_end_common.interface.provenance import ProvenanceReader
+
+from spynnaker.pyNN.data import SpynnakerDataView
 
 
 def extract_per_pop_placements(df, pops):
@@ -70,7 +75,8 @@ def extract_per_pop_info(df, type_of_prov, pops, report=False):
         _mins.append(_min)
     if report:
         write_line()
-    pop_results['global_mean'] = np.nanmean(np.asarray(_means).astype(np.float))
+    pop_results['global_mean'] = np.nanmean(
+        np.asarray(_means).astype(np.float))
     pop_results['global_max'] = np.nanmax(np.asarray(_maxs).astype(np.float))
     pop_results['global_min'] = np.nanmin(np.asarray(_mins).astype(np.float))
     return pop_results
@@ -116,12 +122,11 @@ def provenance_analysis(in_file, fig_folder):
     # Check if the folders exist
     if not os.path.isdir(fig_folder) and not os.path.exists(fig_folder):
         os.mkdir(fig_folder)
-    current_fig_folder = join(fig_folder, in_file.split('/')[-1])
+    current_fig_folder = os.path.join(fig_folder, in_file.split('/')[-1])
     # Make folder for current figures
-    if not os.path.isdir(current_fig_folder) and not os.path.exists(current_fig_folder):
+    if not os.path.isdir(current_fig_folder) and (
+            not os.path.exists(current_fig_folder)):
         os.mkdir(current_fig_folder)
-
-
 
     write_header("Analysing provenance in archive:" + in_file)
     # read the file
@@ -150,8 +155,8 @@ def provenance_analysis(in_file, fig_folder):
     write_short_msg("Number of runs", len(numerical_runs))
     write_sep()
     for run_no in numerical_runs:
-        collated_results[run_no], types_of_provenance, \
-        prov_of_interest, placements[run_no] = provenance_npz_analysis(
+        (collated_results[run_no], types_of_provenance,
+         prov_of_interest, placements[run_no]) = provenance_npz_analysis(
             in_file, fig_folder, run_no)
 
     # if group_on_name is None:
@@ -226,25 +231,29 @@ def save_provenance_to_file_from_database(in_file, simulator):
     if provenance_filename:
         # Produce metadata from the simulator info
         metadata['name'] = simulator.name
-        metadata['no_machine_time_steps'] = simulator.no_machine_time_steps
-        metadata['machine_time_step'] = simulator.machine_time_step
+        metadata['no_machine_time_steps'] = \
+            SpynnakerDataView.get_max_run_time_steps()
+        metadata['machine_time_step'] = \
+            SpynnakerDataView.get_simulation_time_step_ms()
         # metadata['config'] = simulator.config
-        metadata['machine'] = simulator.machine
+        metadata['machine'] = SpynnakerDataView.get_machine()
         metadata['structured_provenance_filename'] = \
-            simulator.structured_provenance_filename
+            SpynnakerDataView.get_structured_provenance_filename()
 
         # how do we loop over all the placements in the database at this point?
         # can we get router_provenance from the database?
         # placements is 0... so is this router(0, 0)?
-        pr = ProvenanceReader(os.path.join(
-            provenance_file_path(), "provenance.sqlite3"))
+        pr = ProvenanceReader(
+            os.path.join(SpynnakerDataView().get_provenance_dir_path(),
+                         "provenance.sqlite3"))
 
         cores_list = pr.get_cores_with_provenance()
 
         # router_provenance = pr.get_provenance_for_router(0, 0)
         # print("router_provenance: ", router_provenance)
 
-        # for i, (provenance, placement) in enumerate(zip(prov_items, prov_placement)):
+        # for i, (provenance, placement) in enumerate(
+        #         zip(prov_items, prov_placement)):
         for core in cores_list:
             x = core[1]
             y = core[2]
@@ -256,7 +265,8 @@ def save_provenance_to_file_from_database(in_file, simulator):
                 continue
             pop = pop[0][0]
             fixed_sdram = structured_prov_core['fixed_sdram'][0][0]
-            sdram_per_timestep = structured_prov_core['sdram_per_timestep'][0][0]
+            sdram_per_timestep = structured_prov_core[
+                'sdram_per_timestep'][0][0]
             cpu_cycles = structured_prov_core['cpu_cycles'][0][0]
 
             label = structured_prov_core['label'][0][0]
@@ -306,7 +316,8 @@ def save_provenance_to_file_from_database(in_file, simulator):
             # TODO check that metadata is correct
 
             # figure out the past run id
-            numerical_runs = [int(x) for x in existing_data.files if x not in ["metadata"]]
+            numerical_runs = [
+                int(x) for x in existing_data.files if x not in ["metadata"]]
             prev_run = np.max(numerical_runs)
 
         else:
@@ -314,19 +325,20 @@ def save_provenance_to_file_from_database(in_file, simulator):
             prev_run = -1  # no previous run
 
         # Current data assembly
-        current_data = {str(prev_run + 1):
-                            structured_provenance_df.to_records(index=False)}
+        current_data = {str(prev_run + 1): structured_provenance_df.to_records(
+            index=False)}
 
         # Append current data to existing data
         np.savez_compressed(provenance_filename,
                             **existing_data,
                             **current_data)
 
+
 def get_provenance_for_core(pr, x, y, p):
     structured_prov = {}
     columns_to_get = ['pop', 'label', 'min_atom', 'max_atom', 'no_atoms',
-               'fixed_sdram', 'sdram_per_timestep',
-               'cpu_cycles', 'dtcm']  # add more as needed
+                      'fixed_sdram', 'sdram_per_timestep',
+                      'cpu_cycles', 'dtcm']  # add more as needed
 
     for column_to_get in columns_to_get:
         query = """
@@ -361,36 +373,41 @@ def get_router_provenance_value(pr, x, y, description):
     return pr.run_query(query, [x, y, description])
 
 
-def plot_2D_map_for_poi(in_file, selected_sim,
-                        provenance_of_interest, router_pop_names, fig_folder, placements):
+def plot_2D_map_for_poi(
+        in_file, selected_sim, provenance_of_interest, router_pop_names,
+        fig_folder, placements):
     write_header("PLOTTING MAPS FOR ALL PRROVENANCE OF INTEREST")
 
     existing_data = np.load(in_file, allow_pickle=True)
     curr_run_np = existing_data[str(selected_sim)]
 
     prov = pd.DataFrame.from_records(curr_run_np)
-    # Filter out router provenance because the logic for plotting those maps is slightly different
+    # Filter out router provenance because the logic for plotting those maps
+    # is slightly different
     pop_only_prov = prov[~prov['pop'].isin(router_pop_names)]
     filtered_placement = \
         placements[selected_sim]
-    try:
-        router_provenance = filtered_placement['router_provenance']
-    except KeyError:
-        traceback.print_exc()
-        router_provenance = filtered_placement
+    # try:
+    #     router_provenance = filtered_placement['router_provenance']
+    # except KeyError:
+    #     traceback.print_exc()
+    #     router_provenance = filtered_placement
 
     for type_of_provenance in provenance_of_interest:
         #  need to get processor p as well as x y prov_value
         filtered_placement = \
-            pop_only_prov[pop_only_prov.prov_name == type_of_provenance][['x', 'y', 'p', 'prov_value']]
+            pop_only_prov[pop_only_prov.prov_name == type_of_provenance][
+                ['x', 'y', 'p', 'prov_value']]
         if filtered_placement.shape[0] == 0:
-            write_short_msg("NO INFORMATION FOR PROVENANCE", type_of_provenance)
+            write_short_msg("NO INFORMATION FOR PROVENANCE",
+                            type_of_provenance)
             continue
 
         # make a new directory for each provenance
         # Check if the results folder exist
         per_prov_dir = os.path.join(fig_folder, type_of_provenance.lower())
-        if not os.path.isdir(per_prov_dir) and not os.path.exists(per_prov_dir):
+        if not os.path.isdir(per_prov_dir) and (
+                not os.path.exists(per_prov_dir)):
             os.mkdir(per_prov_dir)
         # Plotting bit
         # Fake printing to start things off...
@@ -410,9 +427,9 @@ def plot_2D_map_for_poi(in_file, selected_sim,
         x_tick_lables = (x_ticks / magic_constant).astype(int)
         y_ticks = np.arange(0, max_y, magic_constant)[::2]
         y_tick_lables = (y_ticks / magic_constant).astype(int)
-        map = np.ones((max_x, max_y)) * np.nan
+        # map = np.ones((max_x, max_y)) * np.nan
 
-        for row_index, row in filtered_placement.iterrows():
+        for _row_index, row in filtered_placement.iterrows():
             x_pos = int(magic_constant * row.x +
                         ((row.p // magic_constant) % magic_constant))
             y_pos = int(magic_constant * row.y +
@@ -443,9 +460,9 @@ def plot_2D_map_for_poi(in_file, selected_sim,
         cbar = plt.colorbar(im, cax=cax)
         cbar.set_label(use_display_name(type_of_provenance))
 
-        save_figure(plt, join(per_prov_dir,
-                              "map_of_{}_for_{}".format(type_of_provenance,
-                                                        selected_sim)),
+        save_figure(plt, os.path.join(
+            per_prov_dir, "map_of_{}_for_{}".format(type_of_provenance,
+                                                    selected_sim)),
                     extensions=['.png', '.pdf'])
         plt.close(f)
 
@@ -457,7 +474,8 @@ def plot_router_provenance(in_file, selected_sim, router_pop_names,
     curr_run_np = existing_data[str(selected_sim)]
 
     prov = pd.DataFrame.from_records(curr_run_np)
-    # prov = pd.read_csv(join(join(folder, selected_sim), "structured_provenance.csv"))
+    # prov = pd.read_csv(join(join(folder, selected_sim),
+    #                         "structured_provenance.csv"))
     # Need to filter only info for routers
     # then filter by type of router provenance
     # extract X, Y, prov_value
@@ -466,15 +484,18 @@ def plot_router_provenance(in_file, selected_sim, router_pop_names,
 
     for type_of_provenance in router_provenance_of_interest:
         filtered_placement = \
-            router_only_prov[router_only_prov.prov_name == type_of_provenance][['x', 'y', 'prov_value']]
+            router_only_prov[router_only_prov.prov_name == type_of_provenance][
+                ['x', 'y', 'prov_value']]
         if filtered_placement.shape[0] == 0:
-            write_short_msg("NO INFORMATION FOR PROVENANCE", type_of_provenance)
+            write_short_msg("NO INFORMATION FOR PROVENANCE",
+                            type_of_provenance)
             continue
 
         # make a new directory for each provenance
         # Check if the results folder exist
         per_prov_dir = os.path.join(fig_folder, type_of_provenance.lower())
-        if not os.path.isdir(per_prov_dir) and not os.path.exists(per_prov_dir):
+        if not os.path.isdir(per_prov_dir) and (
+                not os.path.exists(per_prov_dir)):
             os.mkdir(per_prov_dir)
         # Plotting bit
         # Fake printing to start things off...
@@ -490,18 +511,19 @@ def plot_router_provenance(in_file, selected_sim, router_pop_names,
         max_x = (filtered_placement.x.max() + 1) * magic_constant
         max_y = (filtered_placement.y.max() + 1) * magic_constant
         x_ticks = np.arange(0, max_x, magic_constant)[::2]
-        # x_tick_lables = np.linspace(0, collated_placements.x.max(), 6).astype(int)
+        # x_tick_lables = np.linspace(
+        #     0, collated_placements.x.max(), 6).astype(int)
         x_tick_lables = (x_ticks / magic_constant).astype(int)
         y_ticks = np.arange(0, max_y, magic_constant)[::2]
-        # y_tick_lables = np.linspace(0, collated_placements.y.max(), 6).astype(int)
+        # y_tick_lables = np.linspace(
+        #     0, collated_placements.y.max(), 6).astype(int)
         y_tick_lables = (y_ticks / magic_constant).astype(int)
-        map = np.ones((max_x, max_y)) * np.nan
+        # map = np.ones((max_x, max_y)) * np.nan
 
-        for row_index, row in filtered_placement.iterrows():
-            map[
-            int(magic_constant * row.y):int(magic_constant * (row.y + 1)),
-            int(magic_constant * row.x):int(magic_constant * (row.x + 1))
-            ] = row.prov_value
+        for _row_index, row in filtered_placement.iterrows():
+            map[int(magic_constant * row.y):int(magic_constant * (row.y + 1)),
+                int(magic_constant * row.x):int(magic_constant * (row.x + 1))
+                ] = row.prov_value
 
         f = plt.figure(1, figsize=(9, 9), dpi=500)
         im = plt.imshow(map, interpolation='none',
@@ -525,9 +547,9 @@ def plot_router_provenance(in_file, selected_sim, router_pop_names,
         cbar = plt.colorbar(im, cax=cax)
         cbar.set_label(use_display_name(type_of_provenance))
 
-        save_figure(plt, join(per_prov_dir,
-                              "map_of_{}_for_{}".format(type_of_provenance,
-                                                        selected_sim)),
+        save_figure(plt, os.path.join(
+            per_prov_dir, "map_of_{}_for_{}".format(type_of_provenance,
+                                                    selected_sim)),
                     extensions=['.png', '.pdf'])
         plt.close(f)
 
@@ -554,11 +576,12 @@ def cumulative_report(collated_results, types_of_provenance, prov_of_interest):
             _means.append(filtered_v['global_mean'])
             _maxs.append(filtered_v['global_max'])
             _mins.append(filtered_v['global_min'])
-            print("run {:40} | min {:10.2f} | mean {:10.2f} | max {:10.2f}".format(
-                k, filtered_v['global_min'], filtered_v['global_mean'], filtered_v['global_max']
-            ))
+            print("{:40} | min {:10.2f} | mean {:10.2f} | max {:10.2f}".format(
+                k, filtered_v['global_min'], filtered_v['global_mean'],
+                filtered_v['global_max']))
             if _max_values_per_pop is None:
-                _max_values_per_pop = {x: [] for x in filtered_v.keys() if "cell" in x}
+                _max_values_per_pop = {
+                    x: [] for x in filtered_v.keys() if "cell" in x}
             for vp in _max_values_per_pop.keys():
                 _max_values_per_pop[vp].append(filtered_v[vp]['max'])
         # Report cumulative stats per population
@@ -569,8 +592,7 @@ def cumulative_report(collated_results, types_of_provenance, prov_of_interest):
         for rk in reporting_keys:
             vals = _max_values_per_pop[rk]
             print("{:40} | mean {:10.2f} | max {:10.2f} | std {:10.2f}".format(
-                rk, np.nanmean(vals), np.nanmax(vals), np.nanstd(vals)
-            ))
+                rk, np.nanmean(vals), np.nanmax(vals), np.nanstd(vals)))
 
 
 def plot_population_placement(collated_results, placements, fig_folder):
@@ -589,7 +611,8 @@ def plot_population_placement(collated_results, placements, fig_folder):
         # make a new directory for each provenance
         # Check if the results folder exist
         per_prov_dir = os.path.join(fig_folder, "placements")
-        if not os.path.isdir(per_prov_dir) and not os.path.exists(per_prov_dir):
+        if not os.path.isdir(per_prov_dir) and (
+                not os.path.exists(per_prov_dir)):
             os.mkdir(per_prov_dir)
 
         # Plotting bit
@@ -653,8 +676,8 @@ def plot_population_placement(collated_results, placements, fig_folder):
         cbar.ax.set_yticks(uniques)
         # cbar.ax.set_yticklabels(plot_display_names)
 
-        save_figure(plt, join(per_prov_dir,
-                              "map_of_placements_for_run_{}".format(selected_sim)),
+        save_figure(plt, os.path.join(
+            per_prov_dir, "map_of_placements_for_run_{}".format(selected_sim)),
                     extensions=['.png', '.pdf'])
         plt.close(f)
 
@@ -662,7 +685,8 @@ def plot_population_placement(collated_results, placements, fig_folder):
         write_short_msg("Plotting map for", selected_sim)
         write_short_msg("Number of cores used", collated_placements.shape[0])
         write_short_msg("Number of chips used",
-                        collated_placements[["x", "y"]].drop_duplicates().shape[0])
+                        collated_placements[
+                            ["x", "y"]].drop_duplicates().shape[0])
         write_short_msg("Unique pop ids", uniques)
         write_line()
 
@@ -684,8 +708,10 @@ def plot_per_population_provenance_of_interest(
         curr_mapping = {val: None for val in sorted_key_list}
         _max_values_per_pop = {}
         for curr_run in sorted_key_list:
-            # If Provenance type is not present (maybe looking for a provenance type for LIF neurons not SSAs)
-            if type_of_prov not in collated_results[curr_run].keys() and router_pop is not None:
+            # If Provenance type is not present (maybe looking for a
+            # provenance type for LIF neurons not SSAs)
+            if type_of_prov not in collated_results[
+                    curr_run].keys() and router_pop is not None:
                 filtered_collated_results = {x: None for x in router_pop}
                 for rp in router_pop:
                     filtered_collated_results[rp] = {
@@ -694,7 +720,8 @@ def plot_per_population_provenance_of_interest(
             elif type_of_prov in collated_results[curr_run].keys():
                 filtered_collated_results = \
                     collated_results[curr_run][type_of_prov]
-            elif type_of_prov in collated_results[curr_run].keys() and router_pop is not None:
+            elif type_of_prov in collated_results[
+                    curr_run].keys() and router_pop is not None:
                 continue
             if router_pop is not None:
                 _max_values_per_pop = \
@@ -706,8 +733,8 @@ def plot_per_population_provenance_of_interest(
                      if ("router" not in x and
                          hasattr(filtered_collated_results[x], "__len__"))}
             for vp in _max_values_per_pop.keys():
-
-                _max_values_per_pop[vp] = [list(filtered_collated_results[vp]['all'].values)]
+                _max_values_per_pop[vp] = [list(
+                    filtered_collated_results[vp]['all'].values)]
 
             # Need to create a list of entries per pop
             if curr_mapping[curr_run] is None:
@@ -734,10 +761,12 @@ def plot_per_population_provenance_of_interest(
             for k in curr_poi:
                 if curr_mapping[k] and curr_mapping[k][pop].size > 0:
                     merged = np.array(
-                        list(itertools.chain.from_iterable(curr_mapping[k][pop]))).astype(np.float)
+                        list(itertools.chain.from_iterable(
+                            curr_mapping[k][pop]))).astype(np.float)
                     curr_median.append(np.nanmedian(merged))
-                    curr_percentiles.append([np.nanmedian(merged) - np.percentile(merged, 5),
-                                             np.percentile(merged, 95) - np.nanmedian(merged)])
+                    curr_percentiles.append(
+                        [np.nanmedian(merged) - np.percentile(merged, 5),
+                         np.percentile(merged, 95) - np.nanmedian(merged)])
                 else:
                     curr_median.append(np.nan)
                     curr_percentiles.append(np.nan)
@@ -765,7 +794,7 @@ def plot_per_population_provenance_of_interest(
                     write_short_msg("exp fit coeff of "
                                     "determination",
                                     fit_res['determination'])
-                except:
+                except Exception:  # pylint: disable=broad-except
                     traceback.print_exc()
 
         plt.xlabel(use_display_name(curr_group))
@@ -773,11 +802,13 @@ def plot_per_population_provenance_of_interest(
         ax = plt.gca()
         plt.legend(loc='best')
         plt.tight_layout()
-        save_figure(plt, join(fig_folder, "median_{}".format(type_of_prov)),
+        save_figure(plt, os.path.join(
+            fig_folder, "median_{}".format(type_of_prov)),
                     extensions=['.png', '.pdf'])
         if "MAX" in type_of_prov:
             ax.set_yscale('log')
-            save_figure(plt, join(fig_folder, "log_y_median_{}".format(type_of_prov)),
+            save_figure(plt, os.path.join(
+                fig_folder, "log_y_median_{}".format(type_of_prov)),
                         extensions=['.png', '.pdf'])
         plt.close(f)
 
@@ -788,7 +819,8 @@ def plot_per_population_provenance_of_interest(
             for k in curr_poi:
                 if curr_mapping[k] and curr_mapping[k][pop].size > 0:
                     merged = np.array(
-                        list(itertools.chain.from_iterable(curr_mapping[k][pop]))).astype(np.float)
+                        list(itertools.chain.from_iterable(
+                            curr_mapping[k][pop]))).astype(np.float)
                     curr_median.append(np.nanmean(merged))
                     curr_percentiles.append(np.nanstd(merged))
                 else:
@@ -817,7 +849,7 @@ def plot_per_population_provenance_of_interest(
                     write_short_msg("exp fit coeff of "
                                     "determination",
                                     fit_res['determination'])
-                except:
+                except Exception:  # pylint: disable=broad-except
                     traceback.print_exc()
 
         plt.xlabel(use_display_name(curr_group))
@@ -825,13 +857,14 @@ def plot_per_population_provenance_of_interest(
         ax = plt.gca()
         plt.legend(loc='best')
         plt.tight_layout()
-        save_figure(plt, join(fig_folder, "{}".format(type_of_prov)),
+        save_figure(plt, os.path.join(fig_folder, "{}".format(type_of_prov)),
                     extensions=['.png', '.pdf'])
 
         plt.close(f)
         if "MAX" in type_of_prov:
             ax.set_yscale('log')
-            save_figure(plt, join(fig_folder, "log_y_median_{}".format(type_of_prov)),
+            save_figure(plt, os.path.join(
+                fig_folder, "log_y_median_{}".format(type_of_prov)),
                         extensions=['.png', '.pdf'])
         plt.close(f)
 
@@ -850,11 +883,13 @@ def polyfit(x, y, degree):
         # fit values, and mean
         yhat = p(x)  # or [p(z) for z in x]
         ybar = np.sum(y) / len(y)  # or sum(y)/len(y)
-        ssreg = np.sum((yhat - ybar) ** 2)  # or sum([ (yihat - ybar)**2 for yihat in yhat])
-        sstot = np.sum((y - ybar) ** 2)  # or sum([ (yi - ybar)**2 for yi in y])
+        ssreg = np.sum((yhat - ybar) ** 2)
+        # or sum([ (yihat - ybar)**2 for yihat in yhat])
+        sstot = np.sum((y - ybar) ** 2)
+        # or sum([ (yi - ybar)**2 for yi in y])
         results['determination'] = ssreg / sstot
 
-    except ValueError:
+    except Exception:  # pylint: disable=broad-except
         traceback.print_exc()
 
     return results
@@ -864,4 +899,3 @@ if __name__ == "__main__":
     import sys
     input_filename = sys.argv[-1]
     provenance_analysis(input_filename, "figures/provenance_figures")
-

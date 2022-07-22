@@ -20,9 +20,11 @@ MF-VN weights
 Check provenance to verify the correct number of spikes being counted.
 """
 import pyNN.spiNNaker as sim
-from vor_cerebellum.utilities import *
+from vor_cerebellum.utilities import (
+    write_header, write_value, make_axes_locatable, save_figure)
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 from vor_cerebellum.parameters import (mfvn_min_weight, mfvn_max_weight,
                                        mfvn_initial_weight,
                                        mfvn_ltp_constant,
@@ -46,7 +48,7 @@ sim.setup(1)  # simulation timestep (ms)
 pc_spike_times = [n_timesteps]
 purkinje_cell = sim.Population(1,  # number of sources
                                sim.SpikeSourceArray,  # source type
-                               {'spike_times': pc_spike_times},  # source spike times
+                               {'spike_times': pc_spike_times},  # spike times
                                label="PC"  # identifier
                                )
 
@@ -56,9 +58,11 @@ all_mf_spike_times = []
 
 for curr_timestep_diff in range(n_timesteps):
     vn_cell = sim.Population(1,  # number of neurons
-                             sim.extra_models.IFCondExpCerebellum(**vn_neuron_params),  # Neuron model
+                             sim.extra_models.IFCondExpCerebellum(
+                                 **vn_neuron_params),  # Neuron model
                              label="VN" + str(curr_timestep_diff),
-                             additional_parameters={"rb_left_shifts": rbls['vn']}
+                             additional_parameters={
+                                 "rb_left_shifts": rbls['vn']}
                              )
     vn_cell.initialize(v=vn_neuron_params['v_rest'])
 
@@ -68,19 +72,18 @@ for curr_timestep_diff in range(n_timesteps):
 
     mf_pop = sim.Population(1,  # number of sources
                             sim.SpikeSourceArray,  # source type
-                            {'spike_times': mf_spike_times},  # source spike times
+                            {'spike_times': mf_spike_times},  # spike times
                             label="MF" + str(curr_timestep_diff)  # identifier
                             )
     all_sources.append(mf_pop)
 
     # Create projection from GC to PC
     mfvn_plas = sim.STDPMechanism(
-        timing_dependence=sim.extra_models.TimingDependenceMFVN(beta=mfvn_beta,
-                                                                sigma=mfvn_sigma,
-                                                                alpha=mfvn_ltd_constant),
-        weight_dependence=sim.extra_models.WeightDependenceMFVN(w_min=mfvn_min_weight,
-                                                                w_max=mfvn_max_weight,
-                                                                pot_alpha=mfvn_ltp_constant),
+        timing_dependence=sim.extra_models.TimingDependenceMFVN(
+            beta=mfvn_beta, sigma=mfvn_sigma, alpha=mfvn_ltd_constant),
+        weight_dependence=sim.extra_models.WeightDependenceMFVN(
+            w_min=mfvn_min_weight, w_max=mfvn_max_weight,
+            pot_alpha=mfvn_ltp_constant),
         weight=mfvn_initial_weight, delay=mfvn_plasticity_delay)
 
     synapse_mfvn = sim.Projection(
@@ -105,7 +108,8 @@ climbing_fibre_spikes = purkinje_cell.get_data('spikes')
 for i in range(n_timesteps):
     final_recordings.append(all_populations[i].get_data())
     final_input_spikes.append(all_sources[i].spinnaker_get_data("spikes"))
-    final_connectivity.append(all_projections[i].get('weight', 'list', with_address=False))
+    final_connectivity.append(all_projections[i].get('weight', 'list',
+                                                     with_address=False))
 
 pc_vn_synapse_weight = pc_vn_synapse.get('weight', 'list', with_address=False)
 
@@ -131,9 +135,12 @@ packet_matrix = np.ones((n_timesteps, runtime)) * np.nan
 gsyn_exc_matrix = np.ones((n_timesteps, runtime)) * np.nan
 
 for i, block in enumerate(final_recordings):
-    voltage_matrix[i] = np.array(block.filter(name='v')).ravel() / scaling_factor
-    packet_matrix[i] = np.array(block.filter(name='packets-per-timestep')).ravel()
-    gsyn_exc_matrix[i] = np.array(block.filter(name='gsyn_exc')).ravel() / scaling_factor
+    voltage_matrix[i] = np.array(
+        block.filter(name='v')).ravel() / scaling_factor
+    packet_matrix[i] = np.array(
+        block.filter(name='packets-per-timestep')).ravel()
+    gsyn_exc_matrix[i] = np.array(
+        block.filter(name='gsyn_exc')).ravel() / scaling_factor
 
 f = plt.figure(1, figsize=(12, 9), dpi=500)
 plt.close(f)

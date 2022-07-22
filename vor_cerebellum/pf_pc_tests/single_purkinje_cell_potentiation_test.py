@@ -14,12 +14,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-LTP for PF-PC cells is done via a constant amount for each pre-synaptic spike. This scripts
-tests this behaviour on SpiNNaker.
+LTP for PF-PC cells is done via a constant amount for each pre-synaptic spike.
+This script tests this behaviour on SpiNNaker.
 """
 import pyNN.spiNNaker as sim
 from pyNN.utility.plotting import Figure, Panel
-from vor_cerebellum.utilities import *
+import numpy as np
+import matplotlib.pyplot as plt
+
+from vor_cerebellum.utilities import write_value
 from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pfpc_ltp_constant, pfpc_t_peak,
                                        pfpc_plasticity_delay,
@@ -30,9 +33,11 @@ initial_weight = 0.0
 sim.setup(1)  # simulation timestep (ms)
 
 purkinje_cell = sim.Population(1,  # number of neurons
-                               sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
+                               sim.extra_models.IFCondExpCerebellum(
+                                   **neuron_params),  # Neuron model
                                label="Purkinje Cell",
-                               additional_parameters={"rb_left_shifts": rbls['purkinje']},
+                               additional_parameters={
+                                   "rb_left_shifts": rbls['purkinje']},
                                )
 
 # Spike source to send spike via synapse
@@ -40,16 +45,17 @@ spike_times = [101, 201, 301, 401, 501, 601, 701, 801, 901]
 
 granular_cell = sim.Population(1,  # number of sources
                                sim.SpikeSourceArray,  # source type
-                               {'spike_times': spike_times},  # source spike times
+                               {'spike_times': spike_times},  # spike times
                                label="src1"  # identifier
                                )
 
 # Create projection from GC to PC
 pfpc_plas = sim.STDPMechanism(
-    timing_dependence=sim.extra_models.TimingDependencePFPC(t_peak=pfpc_t_peak),
-    weight_dependence=sim.extra_models.WeightDependencePFPC(w_min=pfpc_min_weight,
-                                                            w_max=pfpc_max_weight,
-                                                            pot_alpha=pfpc_ltp_constant),
+    timing_dependence=sim.extra_models.TimingDependencePFPC(
+        t_peak=pfpc_t_peak),
+    weight_dependence=sim.extra_models.WeightDependencePFPC(
+        w_min=pfpc_min_weight, w_max=pfpc_max_weight,
+        pot_alpha=pfpc_ltp_constant),
     weight=initial_weight, delay=pfpc_plasticity_delay)
 
 synapse_pfpc = sim.Projection(

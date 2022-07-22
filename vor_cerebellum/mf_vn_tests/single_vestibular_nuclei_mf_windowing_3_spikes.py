@@ -28,9 +28,11 @@ sim.setup(1)  # simulation timestep (ms)
 runtime = 500
 
 vestibular_nuclei = sim.Population(1,  # number of neurons
-                                   sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
+                                   sim.extra_models.IFCondExpCerebellum(
+                                       **neuron_params),  # Neuron model
                                    label="Vestibular Nuclei",
-                                   additional_parameters={"rb_left_shifts": rbls['vn']}
+                                   additional_parameters={
+                                       "rb_left_shifts": rbls['vn']}
                                    )
 
 # Spike source to send spike via synapse
@@ -39,7 +41,7 @@ mf_spike_times = [50, 60, 65]  # , 150, 175, 180, 190, 240, 250, 255,
 
 mossy_fibre_src = sim.Population(1,  # number of sources
                                  sim.SpikeSourceArray,  # source type
-                                 {'spike_times': mf_spike_times},  # source spike times
+                                 {'spike_times': mf_spike_times},  # times
                                  label="src1"  # identifier
                                  )
 
@@ -47,7 +49,7 @@ mossy_fibre_src = sim.Population(1,  # number of sources
 pc_spike_times = [60]  # , 104, 107, 246]
 purkinje_cell_src = sim.Population(1,  # number of sources
                                    sim.SpikeSourceArray,  # source type
-                                   {'spike_times': pc_spike_times},  # source spike times
+                                   {'spike_times': pc_spike_times},  # times
                                    label="purkinje_cell_src"  # identifier
                                    )
 
@@ -55,9 +57,9 @@ purkinje_cell_src = sim.Population(1,  # number of sources
 mfvn_plas = sim.STDPMechanism(
     timing_dependence=sim.extra_models.TimingDependenceMFVN(beta=mfvn_beta,
                                                             sigma=mfvn_sigma),
-    weight_dependence=sim.extra_models.WeightDependenceMFVN(w_min=mfvn_min_weight,
-                                                            w_max=mfvn_max_weight,
-                                                            pot_alpha=mfvn_ltp_constant),
+    weight_dependence=sim.extra_models.WeightDependenceMFVN(
+        w_min=mfvn_min_weight, w_max=mfvn_max_weight,
+        pot_alpha=mfvn_ltp_constant),
     weight=mfvn_initial_weight, delay=mfvn_plasticity_delay)
 
 synapse_mfvn = sim.Projection(
@@ -96,11 +98,13 @@ F = Figure(
 
     Panel(vestibular_nuclei_data.segments[0].filter(name='v')[0],
           ylabel="Membrane potential (mV)",
-          data_labels=[vestibular_nuclei.label], yticks=True, xlim=(0, runtime)),
+          data_labels=[vestibular_nuclei.label], yticks=True, xlim=(0,
+                                                                    runtime)),
 
     Panel(vestibular_nuclei_data.segments[0].filter(name='gsyn_exc')[0],
           ylabel="gsyn excitatory (mV)",
-          data_labels=[vestibular_nuclei.label], yticks=True, xlim=(0, runtime)),
+          data_labels=[vestibular_nuclei.label], yticks=True, xlim=(0,
+                                                                    runtime)),
 
     Panel(vestibular_nuclei_data.segments[0].spiketrains,
           yticks=True, markersize=2, xlim=(0, runtime)),

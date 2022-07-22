@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+from pprint import pprint as pp
 
 DEFAULT_FIGURE_DIR = 'figures/'
 DEFAULT_RESULT_DIR = 'results/'
@@ -49,13 +50,14 @@ parser.add_argument('--simtime', type=int,
                     default=DEFAULT_SINGLE_SIMTIME)
 
 parser.add_argument('--gain', type=float,
-                    help="amplification to contribution of a single spike to eye movement "
-                         "-- default {} ms".format(DEFAULT_GAIN),
+                    help="amplification to contribution of a single spike to "
+                         "eye movement -- default {} ms".format(DEFAULT_GAIN),
                     default=DEFAULT_GAIN)
 
 parser.add_argument('--slowdown_factor', type=int,
                     help="slowdown factor for head movement "
-                         "-- default {} ms".format(DEFAULT_MOVEMENT_SLOWDOWN_FACTOR),
+                         "-- default {} ms".format(
+                             DEFAULT_MOVEMENT_SLOWDOWN_FACTOR),
                     default=DEFAULT_MOVEMENT_SLOWDOWN_FACTOR)
 
 parser.add_argument('--single_simtime', type=int,
@@ -79,8 +81,9 @@ parser.add_argument('--simulator', type=str,
                     default=DEFAULT_SIMULATOR)
 
 parser.add_argument('--nest_grid', type=str,
-                    help="[NEST] which solver to use -- on_grid or off_grid (precise) "
-                         "-- default {} ms".format(DEFAULT_NEST_GRID_MODE),
+                    help="[NEST] which solver to use -- on_grid or off_grid "
+                         "(precise) -- default {} ms".format(
+                             DEFAULT_NEST_GRID_MODE),
                     default=DEFAULT_NEST_GRID_MODE)
 
 parser.add_argument('--f_base', type=float,
@@ -131,13 +134,14 @@ parser.add_argument('--target_reaching', action="store_true",
                     help='set position to which eyes have to target')
 
 parser.add_argument('--worst_case_spikes', action="store_true",
-                    help='[FOR ANALYSIS] if this flag is present the expensive '
-                         'process of counting number of afferent '
+                    help='[FOR ANALYSIS] if this flag is present the '
+                         'expensive process of counting number of afferent '
                          'spikes is performed.')
 
 parser.add_argument('--full_recordings', action="store_true",
-                    help='Enable the recording of v and gsyn, in addition to the default recordings:'
-                         ' spikes and packets per timestep per core.')
+                    help='Enable the recording of v and gsyn, in addition to '
+                         'the default recordings: spikes and packets per '
+                         'timestep per core.')
 
 parser.add_argument('--suffix', type=str,
                     help="extra string to identify some files"
@@ -186,12 +190,14 @@ parser.add_argument('--pfpc_ltp_constant', type=float,
                     default=None)
 
 parser.add_argument('--snapshot', type=str, choices=["last", "best"],
-                    help="[network rebuilding] select whether to rebuild network with the _last_ "
-                         "extracted weights or the weights which produced the _best_ mean average error"
-                         "-- default {}".format("last"),
+                    help="[network rebuilding] select whether to rebuild "
+                         "network with the _last_ extracted weights or the "
+                         "weights which produced the _best_ mean average "
+                         "error -- default {}".format("last"),
                     default="last")
 
-parser.add_argument('--experiment', type=str, choices=["zero", "constant", "bistate", "tristate"],
+parser.add_argument('--experiment', type=str,
+                    choices=["zero", "constant", "bistate", "tristate"],
                     help="[target reaching] type of target reaching experiment"
                          "-- default {}".format("bistate"),
                     default="bistate")
@@ -200,7 +206,6 @@ parser.add_argument('--no_provenance', action="store_true",
                     help='Disable provenance analysis.')
 
 args, unknown = parser.parse_known_args()
-from pprint import pprint as pp
 
 print("=" * 80)
 print("Args")

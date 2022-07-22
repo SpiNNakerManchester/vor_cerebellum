@@ -33,9 +33,11 @@ plastic_delay = 4
 
 p.setup(1)  # simulation timestep (ms)
 purkinje_cell = p.Population(1,  # number of neurons
-                             p.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
+                             p.extra_models.IFCondExpCerebellum(
+                                 **neuron_params),  # Neuron model
                              label="PC",
-                             additional_parameters={"rb_left_shifts": rbls['purkinje']}
+                             additional_parameters={
+                                 "rb_left_shifts": rbls['purkinje']}
                              )
 
 # Spike source to send spike via synapse
@@ -43,7 +45,7 @@ pf_spike_times = [50, 60, 65, 85, 101, 400]
 
 granular_cell = p.Population(1,  # number of sources
                              p.SpikeSourceArray,  # source type
-                             {'spike_times': pf_spike_times},  # source spike times
+                             {'spike_times': pf_spike_times},  # spike times
                              label="GrC"  # identifier
                              )
 
@@ -53,16 +55,16 @@ granular_cell = p.Population(1,  # number of sources
 cf_spike_times = [50, 80, 89, 95, 97, 201]
 climbing_fibre = p.Population(1,  # number of sources
                               p.SpikeSourceArray,  # source type
-                              {'spike_times': cf_spike_times},  # source spike times
+                              {'spike_times': cf_spike_times},  # spike times
                               label="CF"  # identifier
                               )
 
 # Create projection from GC to PC
 pfpc_plas = p.STDPMechanism(
     timing_dependence=p.extra_models.TimingDependencePFPC(t_peak=pfpc_t_peak),
-    weight_dependence=p.extra_models.WeightDependencePFPC(w_min=pfpc_min_weight,
-                                                          w_max=pfpc_max_weight,
-                                                          pot_alpha=pfpc_ltp_constant),
+    weight_dependence=p.extra_models.WeightDependencePFPC(
+        w_min=pfpc_min_weight, w_max=pfpc_max_weight,
+        pot_alpha=pfpc_ltp_constant),
     weight=initial_weight, delay=plastic_delay)
 
 synapse_pfpc = p.Projection(

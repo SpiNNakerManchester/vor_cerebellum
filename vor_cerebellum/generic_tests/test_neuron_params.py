@@ -16,7 +16,8 @@
 import sys
 from vor_cerebellum.parameters import (rbls, neuron_params, CONNECTIVITY_MAP)
 import numpy as np
-from vor_cerebellum.utilities import create_poisson_spikes, floor_spike_time, convert_spikes
+from vor_cerebellum.utilities import (
+    create_poisson_spikes, floor_spike_time, convert_spikes)
 import quantities as pq
 import copy
 import traceback
@@ -24,11 +25,7 @@ import traceback
 spinnaker_sim = False
 def_sim = str.lower(sys.argv[1])
 if def_sim in ["spinnaker", "spynnaker"]:
-    try:
-        # this might be deprecated soon
-        import pyNN.spiNNaker as sim
-    except ImportError:
-        import pyNN.spynnaker as sim
+    import pyNN.spiNNaker as sim
     spinnaker_sim = True
 elif def_sim in ["nest"]:
     import pyNN.nest as sim
@@ -51,8 +48,8 @@ l_rates = create_poisson_spikes(num_neurons,
 
 # Round spike times to time step boundary
 for id, exc_s in enumerate(l_rates):
-    rounded_spike_times = floor_spike_time(exc_s, dt=1.0 * pq.ms,
-                                           t_start=0 * pq.ms, t_stop=runtime * pq.ms)
+    rounded_spike_times = floor_spike_time(
+        exc_s, dt=1.0 * pq.ms, t_start=0 * pq.ms, t_stop=runtime * pq.ms)
     # DEALING WITH nest.lib.hl_api_exceptions.NESTErrors.BadProperty:
     # ("BadProperty in SetStatus_id: Setting status of a
     # 'spike_generator' with GID 855: spike time cannot be
@@ -70,8 +67,8 @@ h_rates = create_poisson_spikes(num_neurons,
 
 # Round spike times to time step boundary
 for id, exc_s in enumerate(h_rates):
-    rounded_spike_times = floor_spike_time(exc_s, dt=1.0 * pq.ms,
-                                           t_start=0 * pq.ms, t_stop=runtime * pq.ms)
+    rounded_spike_times = floor_spike_time(
+        exc_s, dt=1.0 * pq.ms, t_start=0 * pq.ms, t_stop=runtime * pq.ms)
     # Same as before
     rounded_spike_times[rounded_spike_times < 2.0] = 2.0
     h_rates[id] = rounded_spike_times
@@ -117,19 +114,24 @@ input_pops = [low_pop, high_pop]
 input_pop_names = ["low", "high"]
 
 # Create all the pops to test all of the weights in the network
-for case, test_name, rates_for_test, ip in zip(cases, test_case_names, test_rates, input_pops):
+for case, test_name, rates_for_test, ip in zip(
+        cases, test_case_names, test_rates, input_pops):
     print("Current case:", test_name)
     for conn_name, params in CONNECTIVITY_MAP.items():
         print("\tCreating pop", conn_name)
         post_pop = params['post']
         weight = params['weight']
-        # for case_id, (ip, ipn) in enumerate(zip(input_pops, input_pop_names)):
+        # for case_id, (ip, ipn) in enumerate(zip(
+        #         input_pops, input_pop_names)):
         if spinnaker_sim:
-            x = sim.Population(1, sim.IF_cond_exp(**neuron_params), label=conn_name + "_" + test_name,
-                               additional_parameters={"rb_left_shifts": rbls[post_pop]})
+            x = sim.Population(1, sim.IF_cond_exp(**neuron_params),
+                               label=conn_name + "_" + test_name,
+                               additional_parameters={
+                                   "rb_left_shifts": rbls[post_pop]})
             x.record("all")
         else:
-            x = sim.Population(1, sim.IF_cond_exp(**neuron_params), label=conn_name + "_" + test_name)
+            x = sim.Population(1, sim.IF_cond_exp(**neuron_params),
+                               label=conn_name + "_" + test_name)
             x.record(["spikes", "v", "gsyn_exc", "gsyn_inh"])
         all_populations[case][conn_name] = x
         all_projections[case][conn_name] = \
@@ -159,7 +161,8 @@ print("Retrieve recordings")
 for case, pops_for_case in all_populations.items():
     for pop_label, pop_o in pops_for_case.items():
         print("Retrieving spikes for ", pop_label, "...")
-        recorded_spikes[case][pop_label] = convert_spikes(pop_o.get_data(['spikes']))
+        recorded_spikes[case][pop_label] = convert_spikes(
+            pop_o.get_data(['spikes']))
 
         print("Retrieving v for ", pop_label, "...")
         recorded_voltage[case][pop_label] = np.array(
@@ -167,16 +170,19 @@ for case, pops_for_case in all_populations.items():
 
         print("Retrieving gsyn exc for ", pop_label, "...")
         recorded_gsyn_exc[case][pop_label] = np.array(
-            pop_o.get_data(['gsyn_exc']).segments[0].filter(name='gsyn_exc'))[0].T
+            pop_o.get_data(['gsyn_exc']).segments[0].filter(
+                name='gsyn_exc'))[0].T
 
         print("Retrieving gsyn inh for ", pop_label, "...")
         recorded_gsyn_inh[case][pop_label] = np.array(
-            pop_o.get_data(['gsyn_inh']).segments[0].filter(name='gsyn_inh'))[0].T
+            pop_o.get_data(['gsyn_inh']).segments[0].filter(
+                name='gsyn_inh'))[0].T
 
         # if spinnaker_sim return packets
         if spinnaker_sim:
             recorded_no_packets[case][pop_label] = np.array(
-                pop_o.get_data(['packets-per-timestep']).segments[0].filter(name='packets-per-timestep'))[0].T
+                pop_o.get_data(['packets-per-timestep']).segments[0].filter(
+                    name='packets-per-timestep'))[0].T
 
 for case_label, proj_dict in all_projections.items():
     for proj_label, proj_obj in proj_dict.items():
@@ -186,7 +192,7 @@ for case_label, proj_dict in all_projections.items():
         print("Retrieving connectivity for projection ", proj_label, "...")
         try:
             conn = np.array(proj_obj.get(('weight', 'delay'),
-                                  format="list")._get_data_items())
+                                         format="list")._get_data_items())
         except Exception as e:
             print("Careful! Something happened when retrieving the "
                   "connectivity:", e, "\nRetrying...")

@@ -41,7 +41,8 @@ inp_pop = sim.Population(
 # lif pop
 lif_pop = sim.Population(
     100,
-    cellclass=sim.IF_curr_exp, additional_parameters={"rb_left_shifts": [1, 9]},
+    cellclass=sim.IF_curr_exp,
+    additional_parameters={"rb_left_shifts": [1, 9]},
     label="LIF pop 100 spikes")
 
 # connection

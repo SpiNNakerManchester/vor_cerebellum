@@ -20,7 +20,7 @@ from pyNN.utility.plotting import Figure, Panel
 import matplotlib.pyplot as plt
 from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pfpc_ltp_constant, pfpc_t_peak,
-                                       pfpc_plasticity_delay, pfpc_initial_weight,
+                                       pfpc_plasticity_delay,
                                        rbls, neuron_params)
 from vor_cerebellum.provenance_analysis import (
     provenance_analysis, save_provenance_to_file_from_database)
@@ -38,8 +38,10 @@ initial_weight = 0.05
 # plastic_delay = 4
 
 purkinje_cell = sim.Population(1,  # number of neurons
-                               sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
-                               additional_parameters={"rb_left_shifts": rbls['purkinje']},
+                               sim.extra_models.IFCondExpCerebellum(
+                                   **neuron_params),  # Neuron model
+                               additional_parameters={
+                                   "rb_left_shifts": rbls['purkinje']},
                                label="PC"  # identifier
                                )
 
@@ -48,7 +50,7 @@ spike_times = [50, 150, 270]
 
 granular_cell = sim.Population(1,  # number of sources
                                sim.SpikeSourceArray,  # source type
-                               {'spike_times': spike_times},  # source spike times
+                               {'spike_times': spike_times},  # spike times
                                label="GrC"  # identifier
                                )
 
@@ -56,16 +58,17 @@ granular_cell = sim.Population(1,  # number of sources
 spike_times_2 = [100, 104, 107, 246]
 climbing_fibre = sim.Population(1,  # number of sources
                                 sim.SpikeSourceArray,  # source type
-                                {'spike_times': spike_times_2},  # source spike times
+                                {'spike_times': spike_times_2},  # spike times
                                 label="CF"  # identifier
                                 )
 
 # Create projection from GC to PC
 pfpc_plas = sim.STDPMechanism(
-    timing_dependence=sim.extra_models.TimingDependencePFPC(t_peak=pfpc_t_peak),
-    weight_dependence=sim.extra_models.WeightDependencePFPC(w_min=pfpc_min_weight,
-                                                            w_max=pfpc_max_weight,
-                                                            pot_alpha=pfpc_ltp_constant),
+    timing_dependence=sim.extra_models.TimingDependencePFPC(
+        t_peak=pfpc_t_peak),
+    weight_dependence=sim.extra_models.WeightDependencePFPC(
+        w_min=pfpc_min_weight, w_max=pfpc_max_weight,
+        pot_alpha=pfpc_ltp_constant),
     weight=initial_weight, delay=pfpc_plasticity_delay)
 
 synapse_pfpc = sim.Projection(
@@ -94,6 +97,7 @@ if os.path.exists(structured_provenance_filename):
     os.remove(structured_provenance_filename)
 # this would be the best point to look at the database
 simulator = get_simulator()
+# TODO: it may be possible to take the simulator out of this call
 save_provenance_to_file_from_database(
     structured_provenance_filename, simulator)
 

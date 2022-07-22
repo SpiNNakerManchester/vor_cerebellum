@@ -16,9 +16,10 @@
 from __future__ import print_function
 import pyNN.spiNNaker as sim
 from pyNN.utility.plotting import Figure, Panel
-from vor_cerebellum.utilities import *
-from vor_cerebellum.parameters import (mfvn_min_weight, mfvn_max_weight,
-                                       mfvn_initial_weight,
+import numpy as np
+import matplotlib.pyplot as plt
+from vor_cerebellum.utilities import write_value
+from vor_cerebellum.parameters import (mfvn_min_weight,
                                        mfvn_ltp_constant,
                                        mfvn_beta, mfvn_sigma,
                                        mfvn_plasticity_delay,
@@ -29,9 +30,11 @@ initial_weight = 0.
 sim.setup(1)  # simulation timestep (ms)
 
 vestibular_neuclei = sim.Population(1,  # number of neurons
-                                    sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
+                                    sim.extra_models.IFCondExpCerebellum(
+                                        **neuron_params),  # Neuron model
                                     label="Vestibular Nuclei",  # identifier
-                                    additional_parameters={"rb_left_shifts": rbls['vn']}
+                                    additional_parameters={
+                                        "rb_left_shifts": rbls['vn']}
                                     )
 
 # Spike source to send spike via synapse
@@ -39,7 +42,7 @@ spike_times = [101, 201, 301, 401, 501, 601, 701, 801, 901]
 
 mossy_fibre_src = sim.Population(1,  # number of sources
                                  sim.SpikeSourceArray,  # source type
-                                 {'spike_times': spike_times},  # source spike times
+                                 {'spike_times': spike_times},  # spike times
                                  label="MF"  # identifier
                                  )
 
@@ -47,9 +50,8 @@ mossy_fibre_src = sim.Population(1,  # number of sources
 mfvn_plas = sim.STDPMechanism(
     timing_dependence=sim.extra_models.TimingDependenceMFVN(beta=mfvn_beta,
                                                             sigma=mfvn_sigma),
-    weight_dependence=sim.extra_models.WeightDependenceMFVN(w_min=mfvn_min_weight,
-                                                            w_max=0.01,
-                                                            pot_alpha=mfvn_ltp_constant),
+    weight_dependence=sim.extra_models.WeightDependenceMFVN(
+        w_min=mfvn_min_weight, w_max=0.01, pot_alpha=mfvn_ltp_constant),
     weight=initial_weight, delay=mfvn_plasticity_delay)
 
 synapse_mfvn = sim.Projection(
@@ -93,11 +95,13 @@ F = Figure(
 
     Panel(vestibular_neuclei_data.segments[0].filter(name='v')[0],
           ylabel="VN membrane potential (mV)",
-          data_labels=[vestibular_neuclei.label], yticks=True, xlim=(0, runtime)),
+          data_labels=[vestibular_neuclei.label], yticks=True, xlim=(0,
+                                                                     runtime)),
 
     Panel(vestibular_neuclei_data.segments[0].filter(name='gsyn_exc')[0],
           ylabel="VN excitatory current (mV)",
-          data_labels=[vestibular_neuclei.label], yticks=True, xlim=(0, runtime)),
+          data_labels=[vestibular_neuclei.label], yticks=True, xlim=(0,
+                                                                     runtime)),
 
     Panel(vestibular_neuclei_data.segments[0].spiketrains,
           xlabel="Time (ms)",
