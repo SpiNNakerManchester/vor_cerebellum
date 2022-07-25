@@ -237,8 +237,7 @@ def save_provenance_to_file_from_database(in_file, simulator):
             SpynnakerDataView.get_simulation_time_step_ms()
         # metadata['config'] = simulator.config
         metadata['machine'] = SpynnakerDataView.get_machine()
-        metadata['structured_provenance_filename'] = \
-            SpynnakerDataView.get_structured_provenance_filename()
+        metadata['structured_provenance_filename'] = in_file
 
         # how do we loop over all the placements in the database at this point?
         # can we get router_provenance from the database?
@@ -427,19 +426,19 @@ def plot_2D_map_for_poi(
         x_tick_lables = (x_ticks / magic_constant).astype(int)
         y_ticks = np.arange(0, max_y, magic_constant)[::2]
         y_tick_lables = (y_ticks / magic_constant).astype(int)
-        # map = np.ones((max_x, max_y)) * np.nan
+        row_map = np.ones((max_x, max_y)) * np.nan
 
         for _row_index, row in filtered_placement.iterrows():
             x_pos = int(magic_constant * row.x +
                         ((row.p // magic_constant) % magic_constant))
             y_pos = int(magic_constant * row.y +
                         (row.p % magic_constant))
-            map[y_pos, x_pos] = row.prov_value
+            row_map[y_pos, x_pos] = row.prov_value
 
         # crop_point = np.max(np.max(np.argwhere(np.isfinite(map)), axis=0))
         f = plt.figure(1, figsize=(9, 9), dpi=500)
         # plt.matshow(map[:crop_point, :crop_point], interpolation='none')
-        im = plt.imshow(map, interpolation='none',
+        im = plt.imshow(row_map, interpolation='none',
                         cmap=plt.get_cmap('inferno'),
                         extent=[0, max_x, 0, max_y],
                         origin='lower')

@@ -472,8 +472,6 @@ structured_provenance_filename = os.path.join(
 if os.path.exists(structured_provenance_filename):
     os.remove(structured_provenance_filename)
 
-simulator.structured_provenance_filename = structured_provenance_filename
-
 # ============================  Set up constraints ============================
 
 # Hard-coding population placements for testing

@@ -23,7 +23,6 @@ import pyNN.spiNNaker as p
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from spynnaker.pyNN.data import SpynnakerDataView
 
 from vor_cerebellum.utilities import (
     write_header, write_value, make_axes_locatable, save_figure)
@@ -107,8 +106,8 @@ climbing_fibre.record('spikes')
 
 # test provenance gathering
 # simulator = get_simulator()
-SpynnakerDataView.add_structured_provenance_filename(
-    "pf_pc_ltd_structured_provenance.npz")
+# SpynnakerDataView.add_structured_provenance_filename(
+#     "pf_pc_ltd_structured_provenance.npz")
 p.run(runtime)
 
 climbing_fibre_spikes = climbing_fibre.get_data('spikes')

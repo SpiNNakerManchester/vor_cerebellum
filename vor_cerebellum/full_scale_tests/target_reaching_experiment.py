@@ -518,8 +518,6 @@ structured_provenance_filename = os.path.join(
 if os.path.exists(structured_provenance_filename):
     os.remove(structured_provenance_filename)
 
-simulator.structured_provenance_filename = structured_provenance_filename
-
 try:
     for run in range(runtime // single_runtime):
         sim.run(single_runtime)
