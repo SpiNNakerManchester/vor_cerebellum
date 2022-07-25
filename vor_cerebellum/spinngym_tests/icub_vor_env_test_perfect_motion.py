@@ -14,9 +14,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pyNN.spiNNaker as p
+import numpy as np
 import spinn_gym as gym
-from spinn_front_end_common.utilities.globals_variables import get_simulator
-from vor_cerebellum.utilities import *
+from vor_cerebellum.utilities import (
+    generate_head_position_and_velocity, remap_odd_even,
+    remap_second_half_descending, retrieve_and_package_results, plot_results,
+    ICUB_VOR_VENV_POP_SIZE)
 
 # Parameter definition
 runtime = 3000
@@ -31,21 +34,27 @@ vel_to_pos = 1 / (2 * np.pi * slowdown_factor * gain)
 pos_to_vel = 1 / (0.001 * 2 * np.pi * slowdown_factor)
 error_window_size = 10  # ms
 
-head_pos, head_vel = generate_head_position_and_velocity(1, slowdown=slowdown_factor)
+head_pos, head_vel = generate_head_position_and_velocity(
+    1, slowdown=slowdown_factor)
 
 # perfect eye positions and velocities are exactly out of phase with head
-perfect_eye_pos = np.concatenate((head_pos[midway_point:], head_pos[:midway_point]))
-perfect_eye_vel = np.concatenate((head_vel[midway_point:], head_vel[:midway_point]))
+perfect_eye_pos = np.concatenate(
+    (head_pos[midway_point:], head_pos[:midway_point]))
+perfect_eye_vel = np.concatenate(
+    (head_vel[midway_point:], head_vel[:midway_point]))
 
 input_spike_times = [[] for _ in range(input_size)]
-# the constant number (0.000031) is the effect of a single spike on the head position
-# assert (np.isclose(np.abs(np.diff(head_pos)[0]), no_required_spikes_per_chunk * 0.000031), 0.001)
+# the constant number (0.000031) is the effect of a single spike on the head
+# position
+# assert (np.isclose(np.abs(
+#     np.diff(head_pos)[0]), no_required_spikes_per_chunk * 0.000031), 0.001)
 sub_head_pos = np.diff(head_vel)
 head_movement_per_spike = 2 ** (-15) * gain
 sub_eye_pos = np.diff(np.concatenate((perfect_eye_pos, [perfect_eye_pos[0]])))
 
 # no_required_spikes_per_chunk = 200
-no_required_spikes_per_chunk = np.ceil(np.abs(sub_head_pos[0]) / head_movement_per_spike)
+no_required_spikes_per_chunk = np.ceil(
+    np.abs(sub_head_pos[0]) / head_movement_per_spike)
 
 # build ICubVorEnv model
 adjusted_window = 1000 * slowdown_factor
@@ -56,7 +65,8 @@ for ts in range(runtime - 1):
     # if 1000 <= ts < 2000:
     #     continue
     sgn = np.sign(sub_eye_pos[ts % adjusted_window])
-    spikes_during_chunk = np.ceil(np.abs(sub_eye_pos[ts % adjusted_window]) / head_movement_per_spike)
+    spikes_during_chunk = np.ceil(
+        np.abs(sub_eye_pos[ts % adjusted_window]) / head_movement_per_spike)
     for i in range(int(spikes_during_chunk)):
         x = int(sgn <= 0)
         input_spike_times[(i % no_input_cores) * npc_limit + x].append(ts)
@@ -65,7 +75,8 @@ for ts in range(runtime - 1):
 p.setup(timestep=1.0)
 p.set_number_of_neurons_per_core(p.SpikeSourcePoisson, 50)
 p.set_number_of_neurons_per_core(p.SpikeSourceArray, npc_limit)
-input_pop = p.Population(input_size, p.SpikeSourceArray(spike_times=input_spike_times))
+input_pop = p.Population(
+    input_size, p.SpikeSourceArray(spike_times=input_spike_times))
 
 output_pop = p.Population(output_size, p.SpikeSourcePoisson(rate=0))
 
@@ -93,13 +104,11 @@ i2a = p.Projection(input_pop, icub_vor_env_pop, p.AllToAllConnector())
 p.external_devices.activate_live_output_to(
     icub_vor_env_pop, output_pop, "CONTROL")
 
-# Store simulator and run
-simulator = get_simulator()
 # Run the simulation
 p.run(runtime)
 
 # Get the data from the ICubVorEnv pop
-results = retrieve_and_package_results(icub_vor_env_pop, simulator)
+results = retrieve_and_package_results(icub_vor_env_pop)
 
 # get the spike data from input and output
 spikes_in_spin = input_pop.spinnaker_get_data('spikes')

@@ -14,9 +14,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pyNN.spiNNaker as p
+import numpy as np
 import spinn_gym as gym
-from spinn_front_end_common.utilities.globals_variables import get_simulator
-from vor_cerebellum.utilities import *
+from vor_cerebellum.utilities import (
+    generate_head_position_and_velocity, remap_odd_even,
+    remap_second_half_descending, retrieve_and_package_results, plot_results,
+    ICUB_VOR_VENV_POP_SIZE)
 
 # Parameter definition
 runtime = 5000
@@ -38,18 +41,25 @@ npc_limit = 50
 input_spike_times = [[] for _ in range(input_size)]
 
 for i in range(5):
-    input_spike_times[i * 2] = [250 + (10 * 2 * i) for _ in range(1)]
-    input_spike_times[2 * i + 1] = [500 + (10 * (2 * i + 1)) for _ in range(1)]
-    input_spike_times[50 + i * 2] = [750 + (10 * 2 * i) for _ in range(10 + i)]
-    input_spike_times[100 + 2 * i + 1] = [1000 + (10 * (2 * i + 1)) for _ in range(10 + i)]
-    input_spike_times[150 + i * 2] = [1250 + (10 * 2 * i) for _ in range(100 + i)]
-    input_spike_times[150 + 2 * i + 1] = [1500 + (10 * (2 * i + 1)) for _ in range(100 + i)]
+    input_spike_times[i * 2] = [
+        250 + (10 * 2 * i) for _ in range(1)]
+    input_spike_times[2 * i + 1] = [
+        500 + (10 * (2 * i + 1)) for _ in range(1)]
+    input_spike_times[50 + i * 2] = [
+        750 + (10 * 2 * i) for _ in range(10 + i)]
+    input_spike_times[100 + 2 * i + 1] = [
+        1000 + (10 * (2 * i + 1)) for _ in range(10 + i)]
+    input_spike_times[150 + i * 2] = [
+        1250 + (10 * 2 * i) for _ in range(100 + i)]
+    input_spike_times[150 + 2 * i + 1] = [
+        1500 + (10 * (2 * i + 1)) for _ in range(100 + i)]
 
 # Setup
 p.setup(timestep=1.0)
 p.set_number_of_neurons_per_core(p.SpikeSourcePoisson, 50)
 p.set_number_of_neurons_per_core(p.SpikeSourceArray, npc_limit)
-input_pop = p.Population(input_size, p.SpikeSourceArray(spike_times=input_spike_times))
+input_pop = p.Population(
+    input_size, p.SpikeSourceArray(spike_times=input_spike_times))
 
 output_pop = p.Population(output_size, p.SpikeSourcePoisson(rate=0))
 
@@ -77,13 +87,11 @@ i2a = p.Projection(input_pop, icub_vor_env_pop, p.AllToAllConnector())
 p.external_devices.activate_live_output_to(
     icub_vor_env_pop, output_pop, "CONTROL")
 
-# Store simulator and run
-simulator = get_simulator()
 # Run the simulation
 p.run(runtime)
 
 # Get the data from the ICubVorEnv pop
-results = retrieve_and_package_results(icub_vor_env_pop, simulator)
+results = retrieve_and_package_results(icub_vor_env_pop)
 
 # get the spike data from input and output
 spikes_in_spin = input_pop.spinnaker_get_data('spikes')

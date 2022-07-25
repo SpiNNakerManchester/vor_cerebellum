@@ -21,6 +21,9 @@ from pyNN.random import RandomDistribution, NumpyRNG
 # PAB imports
 import traceback
 import neo
+import numpy as np
+import os
+import matplotlib.pyplot as plt
 # general parameters
 from vor_cerebellum.parameters import (CONNECTIVITY_MAP, rbls, neuron_params)
 # MF-VN params
@@ -32,7 +35,12 @@ from vor_cerebellum.parameters import (mfvn_min_weight, mfvn_max_weight,
 from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pfpc_initial_weight,
                                        pfpc_ltp_constant, pfpc_t_peak)
-from vor_cerebellum.utilities import *
+from vor_cerebellum.utilities import (
+    sensorial_activity, generate_head_position_and_velocity,
+    ICUB_VOR_VENV_POP_SIZE, retrieve_and_package_results, get_plot_order,
+    convert_spikes, remap_odd_even, remap_second_half_descending,
+    retrieve_git_commit, result_dir, viridis_cmap, use_display_name,
+    save_figure, fig_folder, plot_results)
 # Imports for SpiNNGym env
 import spinn_gym as gym
 from spinn_front_end_common.utilities.globals_variables import get_simulator
@@ -69,15 +77,16 @@ num_VN_neurons = 200
 num_CF_neurons = 200
 
 # Random distribution for synapses delays and weights (MF and GO)
-delay_distr = RandomDistribution('uniform', (1.0, 10.0), rng=NumpyRNG(seed=85524))
+delay_distr = RandomDistribution(
+    'uniform', (1.0, 10.0), rng=NumpyRNG(seed=85524))
 
-weight_distr_MF = RandomDistribution('uniform',
-                                     (mf_gc_weights * 0.8, mf_gc_weights * 1.2),
-                                     rng=NumpyRNG(seed=85524))
+weight_distr_MF = RandomDistribution(
+    'uniform', (mf_gc_weights * 0.8, mf_gc_weights * 1.2),
+    rng=NumpyRNG(seed=85524))
 
-weight_distr_GO = RandomDistribution('uniform',
-                                     (go_gc_weights * 0.8, go_gc_weights * 1.2),
-                                     rng=NumpyRNG(seed=24568))
+weight_distr_GO = RandomDistribution(
+    'uniform', (go_gc_weights * 0.8, go_gc_weights * 1.2),
+    rng=NumpyRNG(seed=24568))
 
 all_neurons = {
     "mossy_fibres": num_MF_neurons,
@@ -88,21 +97,13 @@ all_neurons = {
     "climbing_fibres": num_CF_neurons
 }
 
-all_populations = {
+all_populations = {}
 
-}
+initial_connectivity = {}
 
-initial_connectivity = {
+final_connectivity = {}
 
-}
-
-final_connectivity = {
-
-}
-
-all_projections = {
-
-}
+all_projections = {}
 
 # Weights of pf_pc
 weight_dist_pfpc = RandomDistribution('uniform',
@@ -125,15 +126,19 @@ sim.setup(timestep=1., min_delay=1, max_delay=15)
 sim.set_number_of_neurons_per_core(sim.SpikeSourcePoisson, ss_neurons_per_core)
 sim.set_number_of_neurons_per_core(sim.SpikeSourceArray, ss_neurons_per_core)
 sim.set_number_of_neurons_per_core(sim.IF_cond_exp, global_n_neurons_per_core)
-sim.set_number_of_neurons_per_core(sim.extra_models.IFCondExpCerebellum, global_n_neurons_per_core)
-sim.set_number_of_neurons_per_core(sim.extra_models.SpikeSourcePoissonVariable, ss_neurons_per_core)
+sim.set_number_of_neurons_per_core(
+    sim.extra_models.IFCondExpCerebellum, global_n_neurons_per_core)
+sim.set_number_of_neurons_per_core(
+    sim.extra_models.SpikeSourcePoissonVariable, ss_neurons_per_core)
 
-# Sensorial Activity: input activity from vestibulus (will come from the head IMU, now it is a test bench)
-# We simulate the output of the head encoders with a sinusoidal function. Each "sensorial activity" value is derived from the
-# head position and velocity. From that value, we generate the mean firing rate of the MF neurons (later this will be an input
-# that will come from the robot, through the spinnLink)
-# the neurons that are active depend on the value of the sensorial activity. For each a gaussian is created centered on a specific neuron
-
+# Sensorial Activity: input activity from vestibulus (will come from the head
+# IMU, now it is a test bench). We simulate the output of the head encoders
+# with a sinusoidal function. Each "sensorial activity" value is derived from
+# the head position and velocity. From that value, we generate the mean firing
+# rate of the MF neurons (later this will be an input that will come from the
+# robot, through the spinnLink) the neurons that are active depend on the value
+# of the sensorial activity. For each a gaussian is created centered on a
+# specific neuron
 
 # Prepare variables once at beginning
 MAX_AMPLITUDE = 0.8
@@ -143,28 +148,34 @@ _head_vel = []
 
 i = np.arange(0, 1000, 0.001)
 for t in i:
-    desired_speed = -np.cos(t * 2 * np.pi) * MAX_AMPLITUDE * RELATIVE_AMPLITUDE * 2.0 * np.pi
+    desired_speed = -np.cos(
+        t * 2 * np.pi) * MAX_AMPLITUDE * RELATIVE_AMPLITUDE * 2.0 * np.pi
     desired_pos = -np.sin(t * 2 * np.pi) * MAX_AMPLITUDE * RELATIVE_AMPLITUDE
     _head_pos.append(desired_pos)
     _head_vel.append(desired_speed)
 
 normalised_head_pos = (np.asarray(_head_pos) + 0.8) / 1.6
-normalised_head_vel = (np.asarray(_head_vel) + 0.8 * 2 * np.pi) / (1.6 * 2 * np.pi)
+normalised_head_vel = (
+    np.asarray(_head_vel) + 0.8 * 2 * np.pi) / (1.6 * 2 * np.pi)
 
 ###############################################################################
-# ============================ Create populations ============================
-##############################################################################
+# ============================ Create populations =========================== #
+###############################################################################
 
-# Create MF population - fake input population that will be substituted by external input from robot
+# Create MF population - fake input population that will be substituted by
+# external input from robot
 all_mf_rates = np.ones((num_MF_neurons, runtime // sample_time)) * np.nan
-all_mf_starts = np.repeat([np.arange(runtime // sample_time) * sample_time], num_MF_neurons, axis=0)
-all_mf_durations = np.ones((num_MF_neurons, runtime // sample_time)) * sample_time
+all_mf_starts = np.repeat(
+    [np.arange(runtime // sample_time) * sample_time], num_MF_neurons, axis=0)
+all_mf_durations = np.ones(
+    (num_MF_neurons, runtime // sample_time)) * sample_time
 for i in range(runtime // sample_time):
-    current_rates = sensorial_activity(_head_pos[i * sample_time], _head_vel[i * sample_time])[0]
+    current_rates = sensorial_activity(
+        _head_pos[i * sample_time], _head_vel[i * sample_time])[0]
     all_mf_rates[:, i] = current_rates
 
 MF_population = sim.Population(num_MF_neurons,  # number of sources
-                               sim.extra_models.SpikeSourcePoissonVariable,  # source type
+                               sim.extra_models.SpikeSourcePoissonVariable,
                                {'rates': all_mf_rates,
                                 'starts': all_mf_starts,
                                 'durations': all_mf_durations
@@ -176,35 +187,36 @@ MF_population = sim.Population(num_MF_neurons,  # number of sources
 all_populations["mossy_fibres"] = MF_population
 
 # Create GOC population
-GOC_population = sim.Population(num_GOC_neurons, sim.IF_cond_exp(), label='GOCLayer',
-                                additional_parameters={"rb_left_shifts": rbls['golgi']}
-                                )
+GOC_population = sim.Population(
+    num_GOC_neurons, sim.IF_cond_exp(), label='GOCLayer',
+    additional_parameters={"rb_left_shifts": rbls['golgi']})
 all_populations["golgi"] = GOC_population
 
 # create PC population
-PC_population = sim.Population(num_PC_neurons,  # number of neurons
-                               sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
-                               label="Purkinje Cell",
-                               additional_parameters={"rb_left_shifts": rbls['purkinje']}
-                               )
+PC_population = sim.Population(
+    num_PC_neurons,  # number of neurons
+    sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
+    label="Purkinje Cell",
+    additional_parameters={"rb_left_shifts": rbls['purkinje']})
 all_populations["purkinje"] = PC_population
 
 # create VN population
-VN_population = sim.Population(num_VN_neurons,  # number of neurons
-                               sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
-                               label="Vestibular Nuclei",
-                               additional_parameters={"rb_left_shifts": rbls['vn']}
-                               )
+VN_population = sim.Population(
+    num_VN_neurons,  # number of neurons
+    sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
+    label="Vestibular Nuclei",
+    additional_parameters={"rb_left_shifts": rbls['vn']})
 all_populations["vn"] = VN_population
 
 # Create GrC population
-GC_population = sim.Population(num_GC_neurons, sim.IF_curr_exp(), label='GCLayer',
-                               additional_parameters={"rb_left_shifts": rbls['granule']}
-                               )
+GC_population = sim.Population(
+    num_GC_neurons, sim.IF_curr_exp(), label='GCLayer',
+    additional_parameters={"rb_left_shifts": rbls['granule']})
 all_populations["granule"] = GC_population
 
 
-# Create CF population - fake input population that will be substituted by external input from robot
+# Create CF population - fake input population that will be substituted by
+# external input from robot
 CF_population = sim.Population(num_CF_neurons,  # number of sources
                                sim.SpikeSourcePoisson,  # source type
                                {'rate': 0},  # source spike times
@@ -214,8 +226,8 @@ CF_population = sim.Population(num_CF_neurons,  # number of sources
 all_populations["climbing_fibres"] = CF_population
 
 ###############################################################################
-# ============================ Create connections ============================
-##############################################################################
+# ============================ Create connections =========================== #
+###############################################################################
 
 # Create MF-GO connections
 mf_go_connections = sim.Projection(MF_population,
@@ -232,7 +244,7 @@ float_num_MF_neurons = float(num_MF_neurons)
 list_GOC_GC = []
 list_MF_GC = []
 list_GOC_GC_2 = []
-# projections to subpopulations https://github.com/SpiNNakerManchester/sPyNNaker8/issues/168)
+# proj to subpops https://github.com/SpiNNakerManchester/sPyNNaker8/issues/168)
 for i in range(num_MF_neurons):
     GC_medium_index = int(round((i / float_num_MF_neurons) * num_GC_neurons))
     GC_lower_index = GC_medium_index - 40
@@ -269,7 +281,7 @@ GO_GC_con1 = sim.Projection(GOC_population,
                             GC_population,
                             sim.FromListConnector(list_GOC_GC),
                             label='goc_grc_1',
-                            receptor_type='inhibitory')  # this should be inhibitory
+                            receptor_type='inhibitory')
 all_projections["goc_grc_1"] = GO_GC_con1
 
 MF_GC_con2 = sim.Projection(MF_population,
@@ -292,9 +304,9 @@ pc_vn_connections = sim.Projection(PC_population,
                                    VN_population,
                                    sim.OneToOneConnector(),
                                    label='pc_vn',
-                                   # receptor_type='GABA', # Should these be inhibitory?
-                                   synapse_type=sim.StaticSynapse(delay=delay_distr,
-                                                                  weight=pc_vn_weights),
+                                   synapse_type=sim.StaticSynapse(
+                                       delay=delay_distr,
+                                       weight=pc_vn_weights),
                                    receptor_type='inhibitory')
 all_projections["pc_vn"] = pc_vn_connections
 
@@ -303,14 +315,15 @@ all_projections["pc_vn"] = pc_vn_connections
 mfvn_plas = sim.STDPMechanism(
     timing_dependence=sim.extra_models.TimingDependenceMFVN(beta=mfvn_beta,
                                                             sigma=mfvn_sigma),
-    weight_dependence=sim.extra_models.WeightDependenceMFVN(w_min=mfvn_min_weight,
-                                                            w_max=mfvn_max_weight,
-                                                            pot_alpha=mfvn_ltp_constant),
+    weight_dependence=sim.extra_models.WeightDependenceMFVN(
+        w_min=mfvn_min_weight, w_max=mfvn_max_weight,
+        pot_alpha=mfvn_ltp_constant),
     weight=mfvn_initial_weight, delay=delay_distr)
 
 # Create MF to VN connections
 mf_vn_connections = sim.Projection(
-    MF_population, VN_population, sim.AllToAllConnector(),  # Needs mapping as FromListConnector to make efficient
+    MF_population, VN_population, sim.AllToAllConnector(),
+    # Needs mapping as FromListConnector to make efficient
     synapse_type=mfvn_plas,
     label='mf_vn',
     receptor_type="excitatory")
@@ -326,10 +339,11 @@ all_projections["pc_vn_teaching"] = pc_vn_connections
 
 # create PF-PC learning rule - sin
 pfpc_plas = sim.STDPMechanism(
-    timing_dependence=sim.extra_models.TimingDependencePFPC(t_peak=pfpc_t_peak),
-    weight_dependence=sim.extra_models.WeightDependencePFPC(w_min=pfpc_min_weight,
-                                                            w_max=pfpc_max_weight,
-                                                            pot_alpha=pfpc_ltp_constant),
+    timing_dependence=sim.extra_models.TimingDependencePFPC(
+        t_peak=pfpc_t_peak),
+    weight_dependence=sim.extra_models.WeightDependencePFPC(
+        w_min=pfpc_min_weight, w_max=pfpc_max_weight,
+        pot_alpha=pfpc_ltp_constant),
     weight=pfpc_initial_weight, delay=delay_distr)
 
 # Create PF-PC connections
@@ -340,14 +354,16 @@ pf_pc_connections = sim.Projection(
     receptor_type="excitatory")
 all_projections["pf_pc"] = pf_pc_connections
 
-# Create IO-PC connections. This synapse with "receptor_type=COMPLEX_SPIKE" propagates the learning signals that drive the plasticity mechanisms in GC-PC synapses
+# Create IO-PC connections. This synapse with "receptor_type=COMPLEX_SPIKE"
+# propagates the learning signals that drive the plasticity mechanisms in
+# GC-PC synapses
 cf_pc_connections = sim.Projection(CF_population,
                                    PC_population,
                                    sim.OneToOneConnector(),
                                    label='cf_pc',
                                    # receptor_type='COMPLEX_SPIKE',
-                                   synapse_type=sim.StaticSynapse(delay=1.0,
-                                                                  weight=cf_pc_weights),
+                                   synapse_type=sim.StaticSynapse(
+                                       delay=1.0, weight=cf_pc_weights),
                                    receptor_type='excitatory')
 all_projections["cf_pc"] = cf_pc_connections
 
@@ -363,7 +379,8 @@ icub_vor_env_model = gym.ICubVorEnv(
 icub_vor_env_pop = sim.Population(ICUB_VOR_VENV_POP_SIZE, icub_vor_env_model)
 
 # Input -> ICubVorEnv projection
-vn_to_icub = sim.Projection(VN_population, icub_vor_env_pop, sim.AllToAllConnector())
+vn_to_icub = sim.Projection(
+    VN_population, icub_vor_env_pop, sim.AllToAllConnector())
 
 # ICubVorEnv -> output, setup live output to the SSP vertex
 sim.external_devices.activate_live_output_to(
@@ -412,7 +429,7 @@ end_time = plt.datetime.datetime.now()
 total_time = end_time - start_time
 sim_total_time = end_time - sim_start_time
 
-# ============================  Retrieving data from simulation ============================
+# ======================  Retrieving data from simulation =====================
 
 MF_spikes = MF_population.get_data('spikes')
 CF_spikes = CF_population.get_data('spikes')
@@ -466,7 +483,7 @@ try:
 
         conn = np.array(conn.tolist())
         final_connectivity[label] = conn
-except:
+except Exception:
     # This simulator might not support the way this is done
     final_connectivity = []
     traceback.print_exc()
@@ -478,7 +495,7 @@ sim.end()
 print("job done")
 # Report time taken
 print("Total time elapsed -- " + str(total_time))
-# ============================  Plotting some stuff ============================
+# ============================  Plotting some stuff ===========================
 # ============================  PAB ANALYSIS ============================
 
 # Compute plot order
@@ -494,7 +511,8 @@ for pop, potential_neo_block in all_spikes.items():
         all_spikes[pop] = convert_spikes(potential_neo_block)
 
 remapped_vn_spikes = remap_odd_even(all_spikes['vn'], all_neurons['vn'])
-remapped_cf_spikes = remap_second_half_descending(all_spikes['climbing_fibres'], all_neurons['climbing_fibres'])
+remapped_cf_spikes = remap_second_half_descending(
+    all_spikes['climbing_fibres'], all_neurons['climbing_fibres'])
 
 simulation_parameters = {
     'runtime': runtime,
@@ -524,19 +542,13 @@ if current_error:
 
 # Save results to file in [by default] the `results/' directory
 results_file = os.path.join(result_dir, filename)
-np.savez_compressed(results_file,
-                    simulation_parameters=simulation_parameters,
-                    all_spikes=all_spikes,
-                    other_recordings=other_recordings,
-                    all_neurons=all_neurons,
-                    final_connectivity=final_connectivity,
-                    initial_connectivity=initial_connectivity,
-                    simtime=runtime,
-                    conn_params=CONNECTIVITY_MAP,
-                    cell_params=neuron_params,
-                    per_pop_neurons_per_core_constraint=per_pop_neurons_per_core_constraint,
-                    )
-
+np.savez_compressed(
+    results_file, simulation_parameters=simulation_parameters,
+    all_spikes=all_spikes, other_recordings=other_recordings,
+    all_neurons=all_neurons, final_connectivity=final_connectivity,
+    initial_connectivity=initial_connectivity, simtime=runtime,
+    conn_params=CONNECTIVITY_MAP, cell_params=neuron_params,
+    per_pop_neurons_per_core_constraint=per_pop_neurons_per_core_constraint)
 
 # Report useful parameters
 print("=" * 80)
@@ -566,7 +578,7 @@ for key in final_connectivity:
         try:
             x = np.concatenate(conn)
             conn = x
-        except:
+        except Exception:
             traceback.print_exc()
         names = [('source', 'int_'),
                  ('target', 'int_'),
@@ -618,7 +630,8 @@ for proj, conn in final_connectivity.items():
     plt.title(use_display_name(proj))
     plt.xlabel("Weight")
     plt.ylabel("Count")
-    save_figure(plt, os.path.join(fig_folder, "{}_weight_histogram".format(proj) + suffix),
+    save_figure(plt, os.path.join(
+        fig_folder, "{}_weight_histogram".format(proj) + suffix),
                 extensions=['.png', ])
     plt.close(f)
 
@@ -642,7 +655,8 @@ F = Figure(
           yticks=True, markersize=2, xlim=(0, total_runtime),
           xlabel='VN_spikes'),
     Panel(VN_spikes.segments[0].filter(name='gsyn_inh')[0],
-          ylabel="Membrane potential (mV)", yticks=True, xlim=(0, total_runtime))
+          ylabel="Membrane potential (mV)", yticks=True, xlim=(0,
+                                                               total_runtime))
 )
 save_figure(plt, os.path.join(fig_folder, "collections" + suffix),
             extensions=['.png', ])
@@ -677,9 +691,8 @@ plot_results(results_dict=results, simulation_parameters=simulation_parameters,
              all_spikes=all_spikes)
 
 plot_results(results_dict=results, simulation_parameters=simulation_parameters,
-             name="figures/cerebellum_icub_last_10k", xlim=[runtime-10000, runtime],
-             all_spikes=all_spikes)
-
+             name="figures/cerebellum_icub_last_10k",
+             xlim=[runtime-10000, runtime], all_spikes=all_spikes)
 
 # Report time taken
 print("Results stored in  -- " + filename)

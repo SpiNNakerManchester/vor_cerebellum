@@ -240,7 +240,7 @@ def generate_head_position_and_velocity(time, dt=0.001, slowdown=1):
     return pos, vel
 
 
-def retrieve_and_package_results(icub_vor_env_pop, simulator):
+def retrieve_and_package_results(icub_vor_env_pop):
     # Get the data from the ICubVorEnv pop
     errors = np.asarray(get_error(icub_vor_env_pop=icub_vor_env_pop)).ravel()
     l_counts = get_l_count(icub_vor_env_pop=icub_vor_env_pop)
