@@ -188,7 +188,7 @@ def provenance_analysis(in_file, fig_folder):
                             current_fig_folder, placements)
 
 
-def save_provenance_to_file_from_database(in_file, simulator):
+def save_provenance_to_file_from_database(in_file, sim_name):
     # Here we need to get the provenance from the database and put it in
     # the specified file
 
@@ -230,7 +230,7 @@ def save_provenance_to_file_from_database(in_file, simulator):
 
     if provenance_filename:
         # Produce metadata from the simulator info
-        metadata['name'] = simulator.name
+        metadata['name'] = sim_name
         metadata['no_machine_time_steps'] = \
             SpynnakerDataView.get_max_run_time_steps()
         metadata['machine_time_step'] = \

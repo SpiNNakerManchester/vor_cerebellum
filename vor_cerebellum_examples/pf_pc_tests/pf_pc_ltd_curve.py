@@ -34,8 +34,6 @@ from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        pc_neuron_params, scaling_factor
                                        )
 
-# from spinn_front_end_common.utilities.globals_variables import get_simulator
-
 runtime = 300
 n_timesteps = 200
 
@@ -104,10 +102,6 @@ for curr_timestep_diff in range(n_timesteps):
 
 climbing_fibre.record('spikes')
 
-# test provenance gathering
-# simulator = get_simulator()
-# SpynnakerDataView.add_structured_provenance_filename(
-#     "pf_pc_ltd_structured_provenance.npz")
 p.run(runtime)
 
 climbing_fibre_spikes = climbing_fibre.get_data('spikes')

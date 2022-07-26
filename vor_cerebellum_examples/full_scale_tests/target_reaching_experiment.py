@@ -47,7 +47,6 @@ from vor_cerebellum.utilities import (
     analyse_run, fig_folder, ICUB_VOR_VENV_POP_SIZE)
 # Imports for SpiNNGym env
 import spinn_gym as gym
-from spinn_front_end_common.utilities.globals_variables import get_simulator
 from vor_cerebellum.vor_argparser import args
 from vor_cerebellum.provenance_analysis import (
     provenance_analysis, save_provenance_to_file_from_database)
@@ -479,9 +478,6 @@ vn_to_icub = sim.Projection(VN_population, icub_vor_env_pop,
 sim.external_devices.activate_live_output_to(
     icub_vor_env_pop, CF_population, "CONTROL")
 
-# Store simulator and run
-simulator = get_simulator()
-
 # ============================  Set up recordings ============================
 
 # Enable relevant recordings
@@ -552,6 +548,7 @@ other_recordings, neo_all_recordings = \
 results = retrieve_and_package_results(icub_vor_env_pop)
 icub_snapshots.append(results)
 
+sim_name = sim.name
 sim.end()
 print("job done")
 # Report time taken
@@ -609,7 +606,7 @@ if current_error:
 
 # this would be the best point to look at the database
 save_provenance_to_file_from_database(
-    structured_provenance_filename, simulator)
+    structured_provenance_filename, sim_name)
 
 # Try to read the structured provenance
 try:

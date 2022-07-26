@@ -44,7 +44,6 @@ from vor_cerebellum.utilities import (
     save_figure, fig_folder, plot_results)
 # Imports for SpiNNGym env
 import spinn_gym as gym
-from spinn_front_end_common.utilities.globals_variables import get_simulator
 
 # Record SCRIPT start time (wall clock)
 start_time = datetime.now()
@@ -386,9 +385,6 @@ vn_to_icub = sim.Projection(
 # ICubVorEnv -> output, setup live output to the SSP vertex
 sim.external_devices.activate_live_output_to(
     icub_vor_env_pop, CF_population, "CONTROL")
-
-# Store simulator and run
-simulator = get_simulator()
 
 # ============================  Set up recordings ============================
 

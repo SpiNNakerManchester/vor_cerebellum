@@ -24,7 +24,6 @@ from vor_cerebellum.parameters import (pfpc_min_weight, pfpc_max_weight,
                                        rbls, neuron_params)
 from vor_cerebellum.provenance_analysis import (
     provenance_analysis, save_provenance_to_file_from_database)
-from spinn_front_end_common.utilities.globals_variables import get_simulator
 
 
 sim.setup(1, min_delay=1, max_delay=15)  # simulation timestep (ms)
@@ -95,11 +94,11 @@ pf_weights = synapse_pfpc.get('weight', 'list', with_address=False)
 structured_provenance_filename = "single_pc_structured_provenance.npz"
 if os.path.exists(structured_provenance_filename):
     os.remove(structured_provenance_filename)
-# this would be the best point to look at the database
-simulator = get_simulator()
+
+sim_name = sim.name
 # TODO: it may be possible to take the simulator out of this call
 save_provenance_to_file_from_database(
-    structured_provenance_filename, simulator)
+    structured_provenance_filename, sim_name)
 
 sim.end()
 print("Final PF-PC weight", pf_weights)
