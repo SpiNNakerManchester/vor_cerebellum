@@ -11,4 +11,5 @@
 **/sPyNNaker/**
 **/SpiNNGym/**
 **/.pylintrc
-**/vor_cerebellym/ipynbs/**
+**/README.MD
+**/vor_cerebellum/ipynbs/**
