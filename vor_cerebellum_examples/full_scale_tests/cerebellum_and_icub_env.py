@@ -490,7 +490,7 @@ except Exception:
     traceback.print_exc()
 
 # Get the data from the ICubVorEnv pop
-results = retrieve_and_package_results(icub_vor_env_pop, simulator)
+results = retrieve_and_package_results(icub_vor_env_pop)
 
 sim.end()
 print("job done")

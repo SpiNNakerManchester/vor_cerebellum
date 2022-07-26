@@ -532,7 +532,7 @@ all_spikes = retrieve_all_spikes(all_populations)
 other_recordings, neo_all_recordings = \
     retrieve_all_other_recordings(all_populations, args.full_recordings)
 # Get the data from the ICubVorEnv pop
-results = retrieve_and_package_results(icub_vor_env_pop, simulator)
+results = retrieve_and_package_results(icub_vor_env_pop)
 icub_snapshots.append(results)
 
 sim.end()
