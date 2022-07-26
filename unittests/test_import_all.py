@@ -22,10 +22,8 @@ class ImportAllModule(unittest.TestCase):
 
     def test_import_all(self):
         if os.environ.get('CONTINUOUS_INTEGRATION', 'false').lower() == 'true':
-            exclusions = ['archived_original_tests']
             package_loader.load_module("vor_cerebellum",
-                                       remove_pyc_files=False,
-                                       exclusions=exclusions)
+                                       remove_pyc_files=False)
         else:
             # Do a full stack cleanup
             package_loader.load_module(
