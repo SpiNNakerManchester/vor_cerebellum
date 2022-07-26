@@ -20,7 +20,7 @@ import traceback
 import neo
 import numpy as np
 import os
-import matplotlib.pyplot as plt
+from datetime import datetime
 # general parameters
 from vor_cerebellum.parameters import (CONNECTIVITY_MAP, rbls, neuron_params)
 from vor_cerebellum.utilities import (
@@ -35,7 +35,7 @@ import spinn_gym as gym
 from vor_cerebellum.vor_argparser import args
 
 # Record SCRIPT start time (wall clock)
-start_time = plt.datetime.datetime.now()
+start_time = datetime.now()
 
 write_header("Re-building a pre-trained network from: " + args.path_to_input)
 
@@ -370,7 +370,7 @@ print("Running simulation for", runtime)
 all_spikes_first_trial = {}
 # Record simulation start time (wall clock)
 current_error = None
-sim_start_time = plt.datetime.datetime.now()
+sim_start_time = datetime.now()
 # Run the simulation
 new_icub_snapshots = []
 try:
@@ -381,7 +381,7 @@ except Exception as e:
     traceback.print_exc()
     current_error = e
 
-end_time = plt.datetime.datetime.now()
+end_time = datetime.now()
 total_time = end_time - start_time
 sim_total_time = end_time - sim_start_time
 

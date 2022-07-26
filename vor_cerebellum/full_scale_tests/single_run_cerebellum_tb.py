@@ -25,6 +25,7 @@ import neo
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+from datetime import datetime
 # general parameters
 from vor_cerebellum.parameters import (L_RATE, H_RATE, rbls, neuron_params)
 # MF-VN params
@@ -41,7 +42,7 @@ from vor_cerebellum.utilities import (
     convert_spikes, viridis_cmap, use_display_name, save_figure, fig_folder)
 
 # Record SCRIPT start time (wall clock)
-start_time = plt.datetime.datetime.now()
+start_time = datetime.now()
 
 # Starting to record additional parameters
 
@@ -378,7 +379,7 @@ print("Running simulation for", runtime,
       " ms split into", samples_in_repeat, "chunks.")
 all_spikes_first_trial = {}
 # Record simulation start time (wall clock)
-sim_start_time = plt.datetime.datetime.now()
+sim_start_time = datetime.now()
 for i in range(samples_in_repeat):
     sim.run(sample_time)
 
@@ -392,7 +393,7 @@ for i in range(samples_in_repeat):
     MF_population.set(rate=sensorial_activity(
         _head_pos[total_runtime], _head_vel[total_runtime])[0])
 
-end_time = plt.datetime.datetime.now()
+end_time = datetime.now()
 total_time = end_time - start_time
 sim_total_time = end_time - sim_start_time
 
@@ -481,7 +482,7 @@ print("=" * 80)
 print("Analysis report")
 print("-" * 80)
 print("Current time",
-      plt.datetime.datetime.now().strftime("%H:%M:%S on %d.%m.%Y"))
+      datetime.now().strftime("%H:%M:%S on %d.%m.%Y"))
 # Report number of neurons
 print("=" * 80)
 print("Number of neurons in each population")

@@ -24,6 +24,7 @@ import neo
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+from datetime import datetime
 # general parameters
 from vor_cerebellum.parameters import (L_RATE, H_RATE, rbls, neuron_params)
 # MF-VN params
@@ -40,7 +41,7 @@ from vor_cerebellum.utilities import (
     viridis_cmap, use_display_name, save_figure, fig_folder)
 
 # Record SCRIPT start time (wall clock)
-start_time = plt.datetime.datetime.now()
+start_time = datetime.now()
 
 # Starting to record additional parameters
 
@@ -115,16 +116,16 @@ per_pop_neurons_per_core_constraint = {
 }
 
 sim.setup(timestep=1., min_delay=1, max_delay=15)
-sim.set_number_of_neurons_per_core(
-    sim.SpikeSourcePoisson, global_n_neurons_per_core)
-sim.set_number_of_neurons_per_core(
-    sim.SpikeSourceArray, global_n_neurons_per_core)
-sim.set_number_of_neurons_per_core(
-    sim.IF_cond_exp, global_n_neurons_per_core)
-sim.set_number_of_neurons_per_core(
-    sim.extra_models.IFCondExpCerebellum, global_n_neurons_per_core)
-sim.set_number_of_neurons_per_core(
-    sim.extra_models.SpikeSourcePoissonVariable, 25)
+# sim.set_number_of_neurons_per_core(
+#     sim.SpikeSourcePoisson, global_n_neurons_per_core)
+# sim.set_number_of_neurons_per_core(
+#     sim.SpikeSourceArray, global_n_neurons_per_core)
+# sim.set_number_of_neurons_per_core(
+#     sim.IF_cond_exp, global_n_neurons_per_core)
+# sim.set_number_of_neurons_per_core(
+#     sim.extra_models.IFCondExpCerebellum, global_n_neurons_per_core)
+# sim.set_number_of_neurons_per_core(
+#     sim.extra_models.SpikeSourcePoissonVariable, 25)
 
 # Sensorial Activity: input activity from vestibulus (will come from the head
 # IMU, now it is a test bench). We simulate the output of the head encoders
@@ -390,7 +391,7 @@ print("Running simulation for", runtime,
       " ms split into", samples_in_repeat, "chunks.")
 all_spikes_first_trial = {}
 # Record simulation start time (wall clock)
-sim_start_time = plt.datetime.datetime.now()
+sim_start_time = datetime.now()
 # for i in range(samples_in_repeat):
 #     sim.run(sample_time)
 #
@@ -405,7 +406,7 @@ sim_start_time = plt.datetime.datetime.now()
 #     _head_pos[total_runtime], _head_vel[total_runtime])[0])
 sim.run(runtime)
 
-end_time = plt.datetime.datetime.now()
+end_time = datetime.now()
 total_time = end_time - start_time
 sim_total_time = end_time - sim_start_time
 
@@ -494,7 +495,7 @@ print("=" * 80)
 print("Analysis report")
 print("-" * 80)
 print("Current time",
-      plt.datetime.datetime.now().strftime("%H:%M:%S on %d.%m.%Y"))
+      datetime.now().strftime("%H:%M:%S on %d.%m.%Y"))
 # Report number of neurons
 print("=" * 80)
 print("Number of neurons in each population")

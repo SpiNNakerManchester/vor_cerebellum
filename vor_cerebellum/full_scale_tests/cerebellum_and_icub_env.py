@@ -24,6 +24,7 @@ import neo
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+from datetime import datetime
 # general parameters
 from vor_cerebellum.parameters import (CONNECTIVITY_MAP, rbls, neuron_params)
 # MF-VN params
@@ -46,7 +47,7 @@ import spinn_gym as gym
 from spinn_front_end_common.utilities.globals_variables import get_simulator
 
 # Record SCRIPT start time (wall clock)
-start_time = plt.datetime.datetime.now()
+start_time = datetime.now()
 
 # Starting to record additional parameters
 
@@ -416,7 +417,7 @@ print("Running simulation for", runtime)
 all_spikes_first_trial = {}
 # Record simulation start time (wall clock)
 current_error = None
-sim_start_time = plt.datetime.datetime.now()
+sim_start_time = datetime.now()
 # Run the simulation
 try:
     sim.run(runtime)
@@ -425,7 +426,7 @@ except Exception as e:
     traceback.print_exc()
     current_error = e
 
-end_time = plt.datetime.datetime.now()
+end_time = datetime.now()
 total_time = end_time - start_time
 sim_total_time = end_time - sim_start_time
 
@@ -555,7 +556,7 @@ print("=" * 80)
 print("Analysis report")
 print("-" * 80)
 print("Current time",
-      plt.datetime.datetime.now().strftime("%H:%M:%S on %d.%m.%Y"))
+      datetime.now().strftime("%H:%M:%S on %d.%m.%Y"))
 # Report number of neurons
 print("=" * 80)
 print("Number of neurons in each population")

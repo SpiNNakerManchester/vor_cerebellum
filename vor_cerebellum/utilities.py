@@ -24,6 +24,7 @@ import copy
 import os
 import string
 import traceback
+from datetime import datetime
 from mpl_toolkits.axes_grid1 import make_axes_locatable  # ImageGrid
 
 from elephant.spike_train_generation import homogeneous_poisson_process
@@ -729,7 +730,7 @@ def analyse_run(results_file, fig_folder, suffix):
     print("Analysis report")
     print("-" * 80)
     print("Current time",
-          plt.datetime.datetime.now().strftime("%H:%M:%S on %d.%m.%Y"))
+          datetime.now().strftime("%H:%M:%S on %d.%m.%Y"))
     # Report number of neurons
     print("=" * 80)
     print("Number of neurons in each population")

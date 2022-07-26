@@ -22,7 +22,7 @@ import traceback
 import neo
 import numpy as np
 import os
-import matplotlib.pyplot as plt
+from datetime import datetime
 # general parameters
 from vor_cerebellum.parameters import (CONNECTIVITY_MAP, rbls, neuron_params)
 # MF-VN params
@@ -53,7 +53,7 @@ from vor_cerebellum.provenance_analysis import (
     provenance_analysis, save_provenance_to_file_from_database)
 
 # Record SCRIPT start time (wall clock)
-start_time = plt.datetime.datetime.now()
+start_time = datetime.now()
 
 # Starting to record additional parameters
 
@@ -503,7 +503,7 @@ print("Running simulation for", runtime)
 all_spikes_first_trial = {}
 # Record simulation start time (wall clock)
 current_error = None
-sim_start_time = plt.datetime.datetime.now()
+sim_start_time = datetime.now()
 # Run the simulation
 final_connectivity = {k: [] for k in all_projections.keys()}
 icub_snapshots = []
@@ -528,7 +528,7 @@ except Exception as e:
     traceback.print_exc()
     current_error = e
 
-end_time = plt.datetime.datetime.now()
+end_time = datetime.now()
 total_time = end_time - start_time
 sim_total_time = end_time - sim_start_time
 
