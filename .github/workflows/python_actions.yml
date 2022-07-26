@@ -65,11 +65,11 @@ jobs:
         coveralls-token: ${{ secrets.COVERALLS_REPO_TOKEN }}
 
     - name: Lint with flake8
-      run: flake8 vor_cerebellum integration_tests unittests
+      run: flake8 vor_cerebellum vor_cerebellum_examples integration_tests unittests
     - name: Lint with pylint
       uses: ./support/actions/pylint
       with: 
-        package: vor_cerebellum
+        package: vor_cerebellum vor_cerebellum_examples
 
     #- name: Validate XML
     #  if: matrix.python-version == 3.8

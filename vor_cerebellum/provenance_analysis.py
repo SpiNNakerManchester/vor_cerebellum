@@ -517,15 +517,16 @@ def plot_router_provenance(in_file, selected_sim, router_pop_names,
         # y_tick_lables = np.linspace(
         #     0, collated_placements.y.max(), 6).astype(int)
         y_tick_lables = (y_ticks / magic_constant).astype(int)
-        # map = np.ones((max_x, max_y)) * np.nan
+        row_map = np.ones((max_x, max_y)) * np.nan
 
         for _row_index, row in filtered_placement.iterrows():
-            map[int(magic_constant * row.y):int(magic_constant * (row.y + 1)),
+            row_map[
+                int(magic_constant * row.y):int(magic_constant * (row.y + 1)),
                 int(magic_constant * row.x):int(magic_constant * (row.x + 1))
                 ] = row.prov_value
 
         f = plt.figure(1, figsize=(9, 9), dpi=500)
-        im = plt.imshow(map, interpolation='none',
+        im = plt.imshow(row_map, interpolation='none',
                         cmap=plt.get_cmap('inferno'),
                         extent=[0, max_x, 0, max_y],
                         origin='lower')
