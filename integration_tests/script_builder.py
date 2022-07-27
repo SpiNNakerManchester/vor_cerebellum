@@ -35,7 +35,7 @@ class ScriptBuilder(RootScriptBuilder):
         # For cron and manual runs these just add a warning
         too_long = {}
 
-        self.create_test_scripts(["vor_cerebellum/full_scale_tests"],
+        self.create_test_scripts(["vor_cerebellum_examples/full_scale_tests"],
                                  too_long, exceptions)
 
 
