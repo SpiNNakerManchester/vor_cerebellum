@@ -45,12 +45,12 @@ POS_TO_VEL = 2 * np.pi * 0.001
 
 fig_folder = "figures/"
 # Check if the folders exist
-if not os.path.isdir(fig_folder) and not os.path.exists(fig_folder):
+if not os.path.isdir(fig_folder):
     os.mkdir(fig_folder)
 
 result_dir = "results/"
 # Check if the results folder exist
-if not os.path.isdir(result_dir) and not os.path.exists(result_dir):
+if not os.path.isdir(result_dir):
     os.mkdir(result_dir)
 
 PREFFERED_ORDER = [
