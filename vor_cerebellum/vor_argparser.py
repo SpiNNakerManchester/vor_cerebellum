@@ -24,6 +24,7 @@ DEFAULT_TIMESTEP = 1.0  # ms
 DEFAULT_ERROR_WINDOW_SIZE = 10  # ms
 DEFAULT_GAIN = 20
 DEFAULT_MOVEMENT_SLOWDOWN_FACTOR = 1
+DEFAULT_FULL_RECORDINGS = True
 
 # rates used by cf
 DEFAULT_BACKGROUND_RATE = 2.  # Hz
@@ -141,7 +142,8 @@ parser.add_argument('--worst_case_spikes', action="store_true",
 parser.add_argument('--full_recordings', action="store_true",
                     help='Enable the recording of v and gsyn, in addition to '
                          'the default recordings: spikes and packets per '
-                         'timestep per core.')
+                         'timestep per core.',
+                    default=DEFAULT_FULL_RECORDINGS)
 
 parser.add_argument('--suffix', type=str,
                     help="extra string to identify some files"
