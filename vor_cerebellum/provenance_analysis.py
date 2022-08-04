@@ -24,8 +24,6 @@ import pylab as plt
 from matplotlib.ticker import MultipleLocator
 import traceback
 
-# from spinn_front_end_common.utilities.globals_variables import (
-#     provenance_file_path)
 from spinn_front_end_common.interface.provenance import ProvenanceReader
 
 from spynnaker.pyNN.data import SpynnakerDataView
@@ -218,14 +216,10 @@ def save_provenance_to_file_from_database(in_file, sim_name):
     # Custom provenance presentation from SpiNNCer
     # write provenance to file here in a useful way
     columns = ['pop', 'label', 'min_atom', 'max_atom', 'no_atoms',
-               'x', 'y', 'p',
-               'prov_name', 'prov_value',
-               'fixed_sdram', 'sdram_per_timestep',
-               'cpu_cycles', 'dtcm']
-    # assert (len(prov_placement) == len(prov_items))
+               'x', 'y', 'p', 'prov_name', 'prov_value',
+               'fixed_sdram', 'sdram_per_timestep']
     structured_provenance = list()
     metadata = {}
-    # Retrieve filename from spynnaker8/spinnaker.py
     provenance_filename = in_file
 
     if provenance_filename:
@@ -239,20 +233,12 @@ def save_provenance_to_file_from_database(in_file, sim_name):
         metadata['machine'] = SpynnakerDataView.get_machine()
         metadata['structured_provenance_filename'] = in_file
 
-        # how do we loop over all the placements in the database at this point?
-        # can we get router_provenance from the database?
-        # placements is 0... so is this router(0, 0)?
         pr = ProvenanceReader(
             os.path.join(SpynnakerDataView().get_provenance_dir_path(),
                          "provenance.sqlite3"))
 
         cores_list = pr.get_cores_with_provenance()
 
-        # router_provenance = pr.get_provenance_for_router(0, 0)
-        # print("router_provenance: ", router_provenance)
-
-        # for i, (provenance, placement) in enumerate(
-        #         zip(prov_items, prov_placement)):
         for core in cores_list:
             x = core[1]
             y = core[2]
@@ -266,13 +252,11 @@ def save_provenance_to_file_from_database(in_file, sim_name):
             fixed_sdram = structured_prov_core['fixed_sdram'][0][0]
             sdram_per_timestep = structured_prov_core[
                 'sdram_per_timestep'][0][0]
-            cpu_cycles = structured_prov_core['cpu_cycles'][0][0]
 
             label = structured_prov_core['label'][0][0]
             max_atom = structured_prov_core['max_atom'][0][0]
             min_atom = structured_prov_core['min_atom'][0][0]
             no_atoms = structured_prov_core['no_atoms'][0][0]
-            dtcm = structured_prov_core['dtcm'][0][0]
 
             for prov_name in prov_of_interest:
                 prov_value = get_core_provenance_value(pr, x, y, p, prov_name)
@@ -283,10 +267,8 @@ def save_provenance_to_file_from_database(in_file, sim_name):
 
                 structured_provenance.append(
                     [pop, label, min_atom, max_atom, no_atoms,
-                     x, y, p,
-                     prov_name, prov_value,
-                     fixed_sdram, sdram_per_timestep,
-                     cpu_cycles, dtcm]
+                     x, y, p, prov_name, prov_value,
+                     fixed_sdram, sdram_per_timestep]
                 )
 
             for prov_name in router_provenance_of_interest:
@@ -298,10 +280,8 @@ def save_provenance_to_file_from_database(in_file, sim_name):
 
                 structured_provenance.append(
                     [pop, label, min_atom, max_atom, no_atoms,
-                     x, y, p,
-                     prov_name, prov_value,
-                     fixed_sdram, sdram_per_timestep,
-                     cpu_cycles, dtcm]
+                     x, y, p, prov_name, prov_value,
+                     fixed_sdram, sdram_per_timestep]
                 )
 
         # print("structured provenance: ", structured_provenance)
@@ -336,8 +316,7 @@ def save_provenance_to_file_from_database(in_file, sim_name):
 def get_provenance_for_core(pr, x, y, p):
     structured_prov = {}
     columns_to_get = ['pop', 'label', 'min_atom', 'max_atom', 'no_atoms',
-                      'fixed_sdram', 'sdram_per_timestep',
-                      'cpu_cycles', 'dtcm']  # add more as needed
+                      'fixed_sdram', 'sdram_per_timestep']
 
     for column_to_get in columns_to_get:
         query = """
@@ -345,11 +324,8 @@ def get_provenance_for_core(pr, x, y, p):
             FROM core_provenance
             WHERE x = ? AND y = ? AND p = ? AND description = ?
             """
-        # result = pr.run_query(query, [x, y, p, column_to_get])
         structured_prov[column_to_get] = pr.run_query(
             query, [x, y, p, column_to_get])
-        # print('x,y,p,desc: ', x, y, p, column_to_get,
-        #       structured_prov[column_to_get])
 
     return structured_prov
 
