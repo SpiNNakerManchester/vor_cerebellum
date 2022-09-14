@@ -456,7 +456,7 @@ sim.external_devices.activate_live_output_to(
 # ============================  Set up recordings ============================
 
 # Enable relevant recordings
-enable_recordings_for(all_populations, full_recordings=True)
+enable_recordings_for(all_populations, full_recordings=args.full_recordings)
 
 # provenance gathering
 x = args.filename or "cerebellum_experiment"
