@@ -471,8 +471,9 @@ icub_vor_env_pop = sim.Population(ICUB_VOR_VENV_POP_SIZE, icub_vor_env_model)
 # GOC_population.set_constraint(RadialPlacementFromChipConstraint(1, 2))
 # icub_vor_env_pop.set_constraint(RadialPlacementFromChipConstraint(5, 3))
 # Input -> ICubVorEnv projection
-vn_to_icub = sim.Projection(VN_population, icub_vor_env_pop,
-                            sim.AllToAllConnector(), label="VN-iCub")
+# vn_to_icub = sim.Projection(VN_population, icub_vor_env_pop,
+#                             sim.AllToAllConnector(), label="VN-iCub")
+sim.external_devices.activate_live_output_to(VN_population, icub_vor_env_pop)
 
 # ICubVorEnv -> output, setup live output to the SSP vertex
 sim.external_devices.activate_live_output_to(
