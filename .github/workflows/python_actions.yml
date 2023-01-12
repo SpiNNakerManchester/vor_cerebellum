@@ -70,6 +70,7 @@ jobs:
       uses: ./support/actions/pylint
       with: 
         package: vor_cerebellum vor_cerebellum_examples
+        exitcheck: 39
 
     #- name: Validate XML
     #  if: matrix.python-version == 3.8
