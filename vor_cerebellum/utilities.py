@@ -1042,8 +1042,8 @@ def analyse_run(results_file, filename, suffix):
         plt.xlabel("Weight (uS)")
         plt.ylabel("Count")
         save_figure(plt, os.path.join(
-            fig_folder_file, "LR_{}_weight_histogram_snap{}".format(proj, suffix)),
-                    extensions=['.png', ])
+            fig_folder_file, "LR_{}_weight_histogram_snap{}".format(
+                proj, suffix)), extensions=['.png', ])
         plt.close(f)
         write_sep()
 
