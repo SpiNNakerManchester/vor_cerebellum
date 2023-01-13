@@ -704,9 +704,10 @@ def retrieve_all_other_recordings(all_populations, full_recordings):
 
 def analyse_run(results_file, filename, suffix):
     # Check if the folders exist
-    fig_folder = fig_folder + filename
-    if not os.path.isdir(fig_folder) and not os.path.exists(fig_folder):
-        os.mkdir(fig_folder)
+    fig_folder_file = fig_folder + filename
+    if (not os.path.isdir(fig_folder_file)) and (
+            not os.path.exists(fig_folder_file)):
+        os.mkdir(fig_folder_file)
 
     # Get npz archive
     previous_run_data = np.load(results_file + ".npz", allow_pickle=True)
@@ -809,7 +810,7 @@ def analyse_run(results_file, filename, suffix):
         curr_ax.set_title(use_display_name(pop))
     plt.xlabel("Time (ms)")
     f.tight_layout()
-    save_figure(plt, os.path.join(fig_folder, "raster_plots" + suffix),
+    save_figure(plt, os.path.join(fig_folder_file, "raster_plots" + suffix),
                 extensions=['.png', '.pdf'])
     plt.close(f)
 
@@ -825,7 +826,7 @@ def analyse_run(results_file, filename, suffix):
             plt.xlabel("Weight")
             plt.ylabel("Count")
             save_figure(plt, os.path.join(
-                fig_folder,
+                fig_folder_file,
                 "{}_weight_histogram_snap{}".format(proj, i) + suffix),
                         extensions=['.png', ])
             plt.close(f)
@@ -834,14 +835,14 @@ def analyse_run(results_file, filename, suffix):
     plot_results(results_dict=results,
                  simulation_parameters=simulation_parameters,
                  name=os.path.join(
-                     fig_folder, "cerebellum_icub_first_1k" + suffix),
+                     fig_folder_file, "cerebellum_icub_first_1k" + suffix),
                  all_spikes=all_spikes,
                  xlim=[0, 1000])
 
     plot_results(results_dict=results,
                  simulation_parameters=simulation_parameters,
                  name=os.path.join(
-                     fig_folder, "cerebellum_icub_last_1k" + suffix),
+                     fig_folder_file, "cerebellum_icub_last_1k" + suffix),
                  all_spikes=all_spikes,
                  xlim=[runtime - 1000, runtime])
 
@@ -849,7 +850,7 @@ def analyse_run(results_file, filename, suffix):
                  simulation_parameters=simulation_parameters,
                  all_spikes=all_spikes,
                  name=os.path.join(
-                     fig_folder, "cerebellum_icub_full" + suffix))
+                     fig_folder_file, "cerebellum_icub_full" + suffix))
 
     # unpacking results
     errors = icub_snapshots[i]['errors']
@@ -898,7 +899,7 @@ def analyse_run(results_file, filename, suffix):
     _, _labels = plt.xticks(np.arange(n_plots) + 1, xtick_display_names)
 
     f.tight_layout()
-    save_figure(plt, os.path.join(fig_folder,
+    save_figure(plt, os.path.join(fig_folder_file,
                                   "bp_errors{}".format(suffix)),
                 extensions=['.png', '.pdf'])
     plt.close(f)
@@ -922,7 +923,7 @@ def analyse_run(results_file, filename, suffix):
     plt.tight_layout()
     save_figure(
         plt,
-        os.path.join(fig_folder, "error_evolution{}".format(suffix)),
+        os.path.join(fig_folder_file, "error_evolution{}".format(suffix)),
         extensions=[".png", ".pdf"])
     plt.close(f)
 
@@ -938,7 +939,7 @@ def analyse_run(results_file, filename, suffix):
     _, _labels = plt.xticks(np.arange(n_plots) + 1, xtick_display_names)
 
     f.tight_layout()
-    save_figure(plt, os.path.join(fig_folder,
+    save_figure(plt, os.path.join(fig_folder_file,
                                   "error_std{}".format(suffix)),
                 extensions=['.png', '.pdf'])
     plt.close(f)
@@ -955,7 +956,7 @@ def analyse_run(results_file, filename, suffix):
     _, _labels = plt.xticks(np.arange(n_plots) + 1, xtick_display_names)
 
     f.tight_layout()
-    save_figure(plt, os.path.join(fig_folder,
+    save_figure(plt, os.path.join(fig_folder_file,
                                   "error_mae{}".format(suffix)),
                 extensions=['.png', '.pdf'])
     plt.close(f)
@@ -996,7 +997,7 @@ def analyse_run(results_file, filename, suffix):
         ax.set_ylabel("Source Neuron ID")
         ax.set_title(use_display_name(proj))
         save_figure(plt, os.path.join(
-            fig_folder, "{}_weight_matrix{}".format(proj, suffix)),
+            fig_folder_file, "{}_weight_matrix{}".format(proj, suffix)),
                     extensions=['.png', '.pdf'])
         plt.close(f)
 
@@ -1018,7 +1019,7 @@ def analyse_run(results_file, filename, suffix):
         # ax.set_ylabel("Source Neuron ID")
         # plt.title(use_display_name(proj))
         # save_figure(plt, os.path.join(
-        #     fig_folder, "{}_delay_matrix{}".format(proj, suffix)),
+        #     fig_folder_file, "{}_delay_matrix{}".format(proj, suffix)),
         #             extensions=['.png', '.pdf'])
         # plt.close(f)
 
@@ -1041,7 +1042,7 @@ def analyse_run(results_file, filename, suffix):
         plt.xlabel("Weight (uS)")
         plt.ylabel("Count")
         save_figure(plt, os.path.join(
-            fig_folder, "LR_{}_weight_histogram_snap{}".format(proj, suffix)),
+            fig_folder_file, "LR_{}_weight_histogram_snap{}".format(proj, suffix)),
                     extensions=['.png', ])
         plt.close(f)
         write_sep()

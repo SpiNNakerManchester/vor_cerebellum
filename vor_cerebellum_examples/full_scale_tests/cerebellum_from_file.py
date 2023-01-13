@@ -29,7 +29,7 @@ from vor_cerebellum.utilities import (
     enable_recordings_for, retrieve_all_spikes, retrieve_all_other_recordings,
     retrieve_and_package_results, get_plot_order, convert_spikes,
     remap_odd_even, remap_second_half_descending, retrieve_git_commit,
-    result_dir, analyse_run, fig_folder, sensorial_activity)
+    result_dir, analyse_run, sensorial_activity)
 # Imports for SpiNNGym env
 import spinn_gym as gym
 from vor_cerebellum.vor_argparser import args
