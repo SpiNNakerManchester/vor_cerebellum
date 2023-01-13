@@ -202,7 +202,8 @@ err = -0.7  # other values to test: -0.3 0 0.3 0.7
 # external input from robot
 CF_population = sim.Population(num_CF_neurons,  # number of sources
                                sim.SpikeSourcePoisson,  # source type
-                               {'rate': error_activity(err, L_RATE, H_RATE)},
+                               # {'rate': error_activity(err, L_RATE, H_RATE)},
+                               {'rate': error_activity(L_RATE, H_RATE)},
                                label="CFLayer",
                                additional_parameters={'seed': 24534,
                                                       'max_rate': MAX_RATE}
@@ -443,9 +444,8 @@ try:
         print("Retrieving connectivity for projection ", label, "...")
         try:
             # pylint: disable-next=protected-access
-            conn = \
-                np.array(p.get(('weight', 'delay'),
-                               format="list")._get_data_items())
+            conn = np.array(p.get(('weight', 'delay'),
+                                  format="list")._get_data_items())
         except Exception as e:  # pylint: disable=broad-except
             print("Careful! Something happened when retrieving the "
                   "connectivity:", e, "\nRetrying...")

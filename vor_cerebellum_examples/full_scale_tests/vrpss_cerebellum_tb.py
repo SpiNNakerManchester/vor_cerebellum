@@ -219,7 +219,8 @@ err = -0.7  # other values to test: -0.3 0 0.3 0.7
 CF_population = sim.Population(
     num_CF_neurons,  # number of sources
     sim.SpikeSourcePoisson,  # source type
-    {'rate': error_activity(err, L_RATE, H_RATE)},  # source spike times
+    # {'rate': error_activity(err, L_RATE, H_RATE)},  # source spike times
+    {'rate': error_activity(L_RATE, H_RATE)},  # source spike times
     label="CFLayer",
     additional_parameters={'seed': 24534})
 all_populations["climbing_fibers"] = CF_population
@@ -455,10 +456,9 @@ try:
             continue
         print("Retrieving connectivity for projection ", label, "...")
         try:
-            # pylint: disable-next=protected-access
-            conn = \
-                np.array(p.get(('weight', 'delay'),
-                               format="list")._get_data_items())
+            # pylint: disable=protected-access
+            conn = np.array(p.get(('weight', 'delay'),
+                                  format="list")._get_data_items())
         except Exception as e:  # pylint: disable=broad-except
             print("Careful! Something happened when retrieving the "
                   "connectivity:", e, "\nRetrying...")

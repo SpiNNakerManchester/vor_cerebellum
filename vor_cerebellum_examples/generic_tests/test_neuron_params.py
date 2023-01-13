@@ -66,12 +66,12 @@ h_rates = create_poisson_spikes(num_neurons,
                                 [[runtime], ] * num_neurons)
 
 # Round spike times to time step boundary
-for id, exc_s in enumerate(h_rates):
+for spike_id, exc_s in enumerate(h_rates):
     rounded_spike_times = floor_spike_time(
         exc_s, dt=1.0 * pq.ms, t_start=0 * pq.ms, t_stop=runtime * pq.ms)
     # Same as before
     rounded_spike_times[rounded_spike_times < 2.0] = 2.0
-    h_rates[id] = rounded_spike_times
+    h_rates[spike_id] = rounded_spike_times
 
 test_rates = [l_rates, h_rates]
 test_case_names = ["Low", "High"]

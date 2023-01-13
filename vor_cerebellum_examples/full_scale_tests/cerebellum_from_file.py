@@ -376,7 +376,7 @@ new_icub_snapshots = []
 try:
     for run in range(runtime // single_runtime):
         sim.run(single_runtime)
-except Exception as e:
+except Exception as e:  # pylint: disable=broad-except
     print("An exception occurred during execution!")
     traceback.print_exc()
     current_error = e

@@ -190,35 +190,35 @@ def convert_spikes(neo, run=0):
 
 # Examples of get functions for variables
 def get_error(icub_vor_env_pop):
-    # pylint: disable-next=protexcted-access
+    # pylint: disable-next=protected-access
     b_vertex = icub_vor_env_pop._vertex
     error = b_vertex.get_recorded_data('error')
     return error.tolist()
 
 
 def get_l_count(icub_vor_env_pop):
-    # pylint: disable-next=protexcted-access
+    # pylint: disable-next=protected-access
     b_vertex = icub_vor_env_pop._vertex
     left_count = b_vertex.get_recorded_data('l_count')
     return left_count.tolist()
 
 
 def get_r_count(icub_vor_env_pop):
-    # pylint: disable-next=protexcted-access
+    # pylint: disable-next=protected-access
     b_vertex = icub_vor_env_pop._vertex
     right_count = b_vertex.get_recorded_data('r_count')
     return right_count.tolist()
 
 
 def get_eye_pos(icub_vor_env_pop):
-    # pylint: disable-next=protexcted-access
+    # pylint: disable-next=protected-access
     b_vertex = icub_vor_env_pop._vertex
     eye_positions = b_vertex.get_recorded_data('eye_pos')
     return eye_positions.tolist()
 
 
 def get_eye_vel(icub_vor_env_pop):
-    # pylint: disable-next=protexcted-access
+    # pylint: disable-next=protected-access
     b_vertex = icub_vor_env_pop._vertex
     eye_velocities = b_vertex.get_recorded_data('eye_vel')
     return eye_velocities.tolist()
@@ -645,10 +645,9 @@ def take_connectivity_snapshot(all_projections, final_connectivity):
                 continue
             print("Retrieving connectivity for projection ", label, "...")
             try:
-                # pylint: disable-next=protected_access
-                conn = \
-                    np.array(p.get(('weight', 'delay'),
-                                   format="list")._get_data_items())
+                # pylint: disable-next=protected-access
+                conn = np.array(p.get(('weight', 'delay'),
+                                      format="list")._get_data_items())
             except Exception as e:  # pylint: disable=broad-except
                 print("Careful! Something happened when retrieving the "
                       "connectivity:", e, "\nRetrying...")
