@@ -113,7 +113,6 @@ COMMON_DISPLAY_NAMES = {
     'mf_vn': "MF-VN",
     'cf_pc': "CF-PC",
     'mf_goc': "MF-GoC",
-    'vn': 'VN',
     'grc': 'GrC',
     'goc': 'GoC',
     'cf': 'CF',
@@ -191,30 +190,35 @@ def convert_spikes(neo, run=0):
 
 # Examples of get functions for variables
 def get_error(icub_vor_env_pop):
+    # pylint: disable-next=protexcted-access
     b_vertex = icub_vor_env_pop._vertex
     error = b_vertex.get_recorded_data('error')
     return error.tolist()
 
 
 def get_l_count(icub_vor_env_pop):
+    # pylint: disable-next=protexcted-access
     b_vertex = icub_vor_env_pop._vertex
     left_count = b_vertex.get_recorded_data('l_count')
     return left_count.tolist()
 
 
 def get_r_count(icub_vor_env_pop):
+    # pylint: disable-next=protexcted-access
     b_vertex = icub_vor_env_pop._vertex
     right_count = b_vertex.get_recorded_data('r_count')
     return right_count.tolist()
 
 
 def get_eye_pos(icub_vor_env_pop):
+    # pylint: disable-next=protexcted-access
     b_vertex = icub_vor_env_pop._vertex
     eye_positions = b_vertex.get_recorded_data('eye_pos')
     return eye_positions.tolist()
 
 
 def get_eye_vel(icub_vor_env_pop):
+    # pylint: disable-next=protexcted-access
     b_vertex = icub_vor_env_pop._vertex
     eye_velocities = b_vertex.get_recorded_data('eye_vel')
     return eye_velocities.tolist()
@@ -446,10 +450,10 @@ def write_value(msg, value):
     print("{:60}:{:19}".format(msg, str(value)))
 
 
-def save_figure(plt, name, extensions=(".png",), **kwargs):
+def save_figure(plot, name, extensions=(".png",), **kwargs):
     for ext in extensions:
         write_short_msg("Plotting", name + ext)
-        plt.savefig(name + ext, **kwargs)
+        plot.savefig(name + ext, **kwargs)
 
 
 def sensorial_activity(head_pos, head_vel):
@@ -497,7 +501,8 @@ def sensorial_activity(head_pos, head_vel):
 
 
 # Error Activity: error from eye and head encoders
-def error_activity(error_, low_rate, high_rate):
+# def error_activity(error_, low_rate, high_rate):
+def error_activity(low_rate, high_rate):
     #     min_rate = 1.0
     #     max_rate = 25.0
     #
@@ -555,13 +560,13 @@ def retrieve_git_commit():
         # We have to use `stdout=PIPE, stderr=PIPE` instead of `text=True`
         # when using Python 3.6 and earlier. Python 3.7+ will have these QOL
         # improvements
-        proc = subprocess.run(bash_command.split(),
-                              stdout=PIPE, stderr=PIPE, shell=False)
+        proc = subprocess.run(bash_command.split(), stdout=PIPE, stderr=PIPE,
+                              shell=False, check=True)
         return proc.stdout
     except subprocess.CalledProcessError as e:
         print("Failed to retrieve git commit HASH-", str(e))
         return "CalledProcessError"
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         print("Failed to retrieve git commit HASH more seriously-", str(e))
         return "GeneralError"
 
@@ -640,10 +645,11 @@ def take_connectivity_snapshot(all_projections, final_connectivity):
                 continue
             print("Retrieving connectivity for projection ", label, "...")
             try:
+                # pylint: disable-next=protected_access
                 conn = \
                     np.array(p.get(('weight', 'delay'),
                                    format="list")._get_data_items())
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 print("Careful! Something happened when retrieving the "
                       "connectivity:", e, "\nRetrying...")
                 conn = \
@@ -651,7 +657,7 @@ def take_connectivity_snapshot(all_projections, final_connectivity):
 
             conn = np.array(conn.tolist())
             final_connectivity[label].append(conn)
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         # This simulator might not support the way this is done
         final_connectivity = []
         traceback.print_exc()
@@ -687,7 +693,7 @@ def retrieve_all_other_recordings(all_populations, full_recordings):
             other_recordings[label]['packets'] = np.array(
                 pop.get_data(['packets-per-timestep']).segments[0].filter(
                     name='packets-per-timestep'))[0].T
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             print("Failed to retrieve packets-per-timestep")
 
         neo_all_recordings[label] = pop.get_data(  # 'all')
@@ -696,8 +702,9 @@ def retrieve_all_other_recordings(all_populations, full_recordings):
     return other_recordings, neo_all_recordings
 
 
-def analyse_run(results_file, fig_folder, suffix):
+def analyse_run(results_file, filename, suffix):
     # Check if the folders exist
+    fig_folder = fig_folder + filename
     if not os.path.isdir(fig_folder) and not os.path.exists(fig_folder):
         os.mkdir(fig_folder)
 
@@ -754,7 +761,7 @@ def analyse_run(results_file, fig_folder, suffix):
             try:
                 x = np.concatenate(conn)
                 conn = x
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 traceback.print_exc()
             names = [('source', 'int_'),
                      ('target', 'int_'),
@@ -778,7 +785,7 @@ def analyse_run(results_file, fig_folder, suffix):
             mean = np.mean(conn[:, 3])
             print("{:27} -> {:4.2f} ms".format(
                 key, mean))
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             print(key)
             traceback.print_exc()
 

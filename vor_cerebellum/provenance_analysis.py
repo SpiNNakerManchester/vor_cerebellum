@@ -80,7 +80,7 @@ def extract_per_pop_info(df, type_of_prov, pops, report=False):
     return pop_results
 
 
-def provenance_npz_analysis(in_file, fig_folder, run_no):
+def provenance_npz_analysis(in_file, run_no):
     write_header("Reading provenances in file " + in_file)
     existing_data = np.load(in_file, allow_pickle=True)
     curr_run_np = existing_data[str(run_no)]
@@ -155,7 +155,7 @@ def provenance_analysis(in_file, fig_folder):
     for run_no in numerical_runs:
         (collated_results[run_no], types_of_provenance,
          prov_of_interest, placements[run_no]) = provenance_npz_analysis(
-            in_file, fig_folder, run_no)
+            in_file, run_no)
 
     # if group_on_name is None:
     write_header("REPORTING BEST SIMULATIONS")
@@ -617,19 +617,19 @@ def plot_population_placement(collated_results, placements, fig_folder):
         x_tick_lables = (x_ticks / magic_constant).astype(int)
         y_ticks = np.arange(0, max_y, magic_constant)[::2]
         y_tick_lables = (y_ticks / magic_constant).astype(int)
-        map = np.ones((max_x, max_y)) * np.nan
+        plot_map = np.ones((max_x, max_y)) * np.nan
         for index, pop in enumerate(plot_order):
             curr_pl = placements_per_pop[pop]
-            for row_index, row in curr_pl.iterrows():
+            for _row_index, row in curr_pl.iterrows():
                 x_pos = int(magic_constant * row.x +
                             ((row.p // magic_constant) % magic_constant))
                 y_pos = int(magic_constant * row.y +
                             (row.p % magic_constant))
-                map[y_pos, x_pos] = index
+                plot_map[y_pos, x_pos] = index
 
-        uniques = np.unique(map[np.isfinite(map)]).astype(int)
+        uniques = np.unique(plot_map[np.isfinite(plot_map)]).astype(int)
         f = plt.figure(1, figsize=(9, 9), dpi=500)
-        im = plt.imshow(map, interpolation='none', vmin=0, vmax=n_plots,
+        im = plt.imshow(plot_map, interpolation='none', vmin=0, vmax=n_plots,
                         cmap=plt.get_cmap('viridis', n_plots),
                         extent=[0, max_x, 0, max_y],
                         origin='lower')

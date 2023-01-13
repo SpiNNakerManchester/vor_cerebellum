@@ -481,7 +481,7 @@ print("Results stored in  -- " + filename)
 # Report time taken
 print("Total time elapsed -- " + str(total_time))
 analyse_run(results_file=results_file,
-            fig_folder=fig_folder + filename,
+            filename=filename,
             suffix=suffix)
 
 # Report time taken

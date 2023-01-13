@@ -520,7 +520,7 @@ try:
         sim.run(single_runtime)
         # Retrieve final network connectivity
         take_connectivity_snapshot(all_projections, final_connectivity)
-except Exception as e:
+except Exception as e:  # pylint: disable=broad-except
     print("An exception occurred during execution!")
     traceback.print_exc()
     current_error = e
@@ -612,7 +612,7 @@ save_provenance_to_file_from_database(
 # Try to read the structured provenance
 try:
     struct_prov = np.load(structured_provenance_filename, allow_pickle=True)
-except Exception:
+except Exception:  # pylint: disable=broad-except
     struct_prov = {}
     print("Failed to retrieve structured provenance")
     traceback.print_exc()
@@ -640,7 +640,7 @@ print("Results stored in  -- " + filename)
 # Report time taken
 print("Total time elapsed -- " + str(total_time))
 analyse_run(results_file=results_file,
-            fig_folder=fig_folder + filename,
+            filename=filename,
             suffix=suffix)
 
 if not args.no_provenance:

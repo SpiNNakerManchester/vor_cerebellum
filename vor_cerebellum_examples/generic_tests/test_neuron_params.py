@@ -47,7 +47,7 @@ l_rates = create_poisson_spikes(num_neurons,
                                 [[runtime], ] * num_neurons)
 
 # Round spike times to time step boundary
-for id, exc_s in enumerate(l_rates):
+for spike_id, exc_s in enumerate(l_rates):
     rounded_spike_times = floor_spike_time(
         exc_s, dt=1.0 * pq.ms, t_start=0 * pq.ms, t_stop=runtime * pq.ms)
     # DEALING WITH nest.lib.hl_api_exceptions.NESTErrors.BadProperty:
@@ -58,7 +58,7 @@ for id, exc_s in enumerate(l_rates):
     # 'spike_generator' with GID 855: spike time cannot be set to 0.")
     # Which means IT CAN'T BE 0.1, NOT 0
     rounded_spike_times[rounded_spike_times < 2.0] = 2.0
-    l_rates[id] = rounded_spike_times
+    l_rates[spike_id] = rounded_spike_times
 
 h_rates = create_poisson_spikes(num_neurons,
                                 [[H_RATE], ] * num_neurons,
@@ -148,7 +148,7 @@ current_error = None
 # Run the simulation
 try:
     sim.run(runtime)  # ms
-except Exception as e:
+except Exception as e:  # pylint: disable=broad-except
     print("An exception occurred during execution!")
     traceback.print_exc()
     current_error = e
@@ -191,9 +191,10 @@ for case_label, proj_dict in all_projections.items():
             continue
         print("Retrieving connectivity for projection ", proj_label, "...")
         try:
+            # pylint: disable-next=protected-access
             conn = np.array(proj_obj.get(('weight', 'delay'),
                                          format="list")._get_data_items())
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             print("Careful! Something happened when retrieving the "
                   "connectivity:", e, "\nRetrying...")
             conn = np.array(proj_obj.get(('weight', 'delay'), format="list"))
