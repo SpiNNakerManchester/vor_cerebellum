@@ -74,9 +74,9 @@ def extract_per_pop_info(df, type_of_prov, pops, report=False):
     if report:
         write_line()
     pop_results['global_mean'] = np.nanmean(
-        np.asarray(_means).astype(np.float))
-    pop_results['global_max'] = np.nanmax(np.asarray(_maxs).astype(np.float))
-    pop_results['global_min'] = np.nanmin(np.asarray(_mins).astype(np.float))
+        np.asarray(_means).astype(float))
+    pop_results['global_max'] = np.nanmax(np.asarray(_maxs).astype(float))
+    pop_results['global_min'] = np.nanmin(np.asarray(_mins).astype(float))
     return pop_results
 
 
@@ -428,7 +428,7 @@ def plot_2D_map_for_poi(
         ax.yaxis.set_minor_locator(MultipleLocator(magic_constant))
         ax.xaxis.set_minor_locator(MultipleLocator(magic_constant))
 
-        plt.grid(b=True, which='both', color='k', linestyle='-')
+        plt.grid(visible=True, which='both', color='k', linestyle='-')
 
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", "5%", pad="3%")
@@ -643,7 +643,7 @@ def plot_population_placement(collated_results, placements, fig_folder):
         ax.yaxis.set_minor_locator(MultipleLocator(magic_constant))
         ax.xaxis.set_minor_locator(MultipleLocator(magic_constant))
 
-        plt.grid(b=True, which='both', color='k', linestyle='-')
+        plt.grid(visible=True, which='both', color='k', linestyle='-')
 
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", "5%", pad="3%")
@@ -677,6 +677,7 @@ def plot_per_population_provenance_of_interest(
     sorted_key_list = list(collated_results.keys())
     sorted_key_list.sort()
     curr_poi = sorted_key_list
+    print("CURR_POI IS ", curr_poi)
     f = plt.figure(1, figsize=(9, 9), dpi=400)
     plt.close(f)
     curr_group = "Runs"
@@ -738,7 +739,7 @@ def plot_per_population_provenance_of_interest(
                 if curr_mapping[k] and curr_mapping[k][pop].size > 0:
                     merged = np.array(
                         list(itertools.chain.from_iterable(
-                            curr_mapping[k][pop]))).astype(np.float)
+                            curr_mapping[k][pop]))).astype(float)
                     curr_median.append(np.nanmedian(merged))
                     curr_percentiles.append(
                         [np.nanmedian(merged) - np.percentile(merged, 5),
@@ -757,21 +758,28 @@ def plot_per_population_provenance_of_interest(
                              label=use_display_name(pop),
                              alpha=0.8)
                 # also print out the values per pop to easily copy and paste
-                write_short_msg(use_display_name(pop), curr_median)
-                write_short_msg(use_display_name(pop), curr_percentiles)
-                try:
-                    # TODO also do some curve fitting for these numbers
-                    for deg in [1, 2]:
-                        fit_res = polyfit(curr_poi, curr_median, deg)
-                        write_short_msg("degree poly {} coeff of "
-                                        "determination".format(deg),
+                write_short_msg(use_display_name(pop), [curr_median,
+                                                        curr_percentiles])
+
+                # only bother with curve fitting if there's a point in doing
+                # it; in cases where this is run from cerebellum_experiment.py
+                # (for example), curr_poi = [0] and so no fitting can happen
+
+                if curr_poi != [0]:
+                    try:
+                        # TODO also do some curve fitting for these numbers
+                        for deg in [1, 2]:
+                            fit_res = polyfit(curr_poi, curr_median, deg)
+                            write_short_msg("degree poly {} coeff of "
+                                            "determination".format(deg), )
+                                            # "determination".format(deg),
+                                            # fit_res['determination'])
+                        fit_res = polyfit(curr_poi, np.log(curr_median), 1)
+                        write_short_msg("exp fit coeff of "
+                                        "determination",
                                         fit_res['determination'])
-                    fit_res = polyfit(curr_poi, np.log(curr_median), 1)
-                    write_short_msg("exp fit coeff of "
-                                    "determination",
-                                    fit_res['determination'])
-                except Exception:  # pylint: disable=broad-except
-                    traceback.print_exc()
+                    except Exception:  # pylint: disable=broad-except
+                        traceback.print_exc()
 
         plt.xlabel(use_display_name(curr_group))
         plt.ylabel(use_display_name(type_of_prov))
@@ -796,7 +804,7 @@ def plot_per_population_provenance_of_interest(
                 if curr_mapping[k] and curr_mapping[k][pop].size > 0:
                     merged = np.array(
                         list(itertools.chain.from_iterable(
-                            curr_mapping[k][pop]))).astype(np.float)
+                            curr_mapping[k][pop]))).astype(float)
                     curr_median.append(np.nanmean(merged))
                     curr_percentiles.append(np.nanstd(merged))
                 else:
@@ -810,23 +818,28 @@ def plot_per_population_provenance_of_interest(
                              marker='o',
                              label=use_display_name(pop),
                              alpha=0.8)
-                # also print out the values per pop to easily copy and past
                 # also print out the values per pop to easily copy and paste
-                write_short_msg(use_display_name(pop), curr_median)
-                write_short_msg(use_display_name(pop), curr_percentiles)
+                write_short_msg(use_display_name(pop), [curr_median,
+                                                        curr_percentiles])
                 # TODO also do some curve fitting for these numbers
-                try:
-                    for deg in [1, 2]:
-                        fit_res = polyfit(curr_poi, curr_median, deg)
-                        write_short_msg("degree poly {} coeff of "
-                                        "determination".format(deg),
+
+                # only bother with curve fitting if there's a point in doing
+                # it; in cases where this is run from cerebellum_experiment.py
+                # (for example), curr_poi = [0] and so no fitting can happen
+
+                if curr_poi != [0]:
+                    try:
+                        for deg in [1, 2]:
+                            fit_res = polyfit(curr_poi, curr_median, deg)
+                            write_short_msg("degree poly {} coeff of "
+                                            "determination".format(deg),
+                                            fit_res['determination'])
+                        fit_res = polyfit(curr_poi, np.log(curr_median), 1)
+                        write_short_msg("exp fit coeff of "
+                                        "determination",
                                         fit_res['determination'])
-                    fit_res = polyfit(curr_poi, np.log(curr_median), 1)
-                    write_short_msg("exp fit coeff of "
-                                    "determination",
-                                    fit_res['determination'])
-                except Exception:  # pylint: disable=broad-except
-                    traceback.print_exc()
+                    except Exception:  # pylint: disable=broad-except
+                        traceback.print_exc()
 
         plt.xlabel(use_display_name(curr_group))
         plt.ylabel(use_display_name(type_of_prov))
@@ -850,6 +863,7 @@ def polyfit(x, y, degree):
     results = {}
 
     try:
+        print("polyfit: x, y, degree: ", x, y, degree)
         coeffs = np.polyfit(x, y, degree)
         # Polynomial Coefficients
         results['polynomial'] = coeffs.tolist()

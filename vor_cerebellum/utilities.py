@@ -644,6 +644,7 @@ def take_connectivity_snapshot(all_projections, final_connectivity):
                 print("Projection", label, "is not implemented!")
                 continue
             print("Retrieving connectivity for projection ", label, "...")
+            print("projection is ", p)
             try:
                 # pylint: disable-next=protected-access
                 conn = np.array(p.get(('weight', 'delay'),
@@ -651,8 +652,8 @@ def take_connectivity_snapshot(all_projections, final_connectivity):
             except Exception as e:  # pylint: disable=broad-except
                 print("Careful! Something happened when retrieving the "
                       "connectivity:", e, "\nRetrying...")
-                conn = \
-                    np.array(p.get(('weight', 'delay'), format="list"))
+#                conn = \
+#                    np.array(p.get(('weight', 'delay'), format="list"))
 
             conn = np.array(conn.tolist())
             final_connectivity[label].append(conn)
@@ -773,7 +774,11 @@ def analyse_run(results_file, filename, suffix):
             final_connectivity[key] = useful_conn.astype(np.float)
             conn = useful_conn.astype(np.float)
         conn_dict[key] = conn
-        mean = np.mean(conn[:, 2])
+        if conn.ndim == 1:
+            # there's only one entry
+            mean = conn[2]
+        else:
+            mean = np.mean(conn[:, 2])
         print("{:27} -> {:4.6f} uS".format(
             key, mean))
 
@@ -782,7 +787,10 @@ def analyse_run(results_file, filename, suffix):
     for key in final_connectivity:
         try:
             conn = conn_dict[key][-1]
-            mean = np.mean(conn[:, 3])
+            if conn.ndim == 1:
+                mean = conn[3]
+            else:
+                mean = np.mean(conn[:, 3])
             print("{:27} -> {:4.2f} ms".format(
                 key, mean))
         except Exception:  # pylint: disable=broad-except
