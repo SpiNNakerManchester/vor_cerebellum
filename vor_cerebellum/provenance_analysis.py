@@ -771,9 +771,8 @@ def plot_per_population_provenance_of_interest(
                         for deg in [1, 2]:
                             fit_res = polyfit(curr_poi, curr_median, deg)
                             write_short_msg("degree poly {} coeff of "
-                                            "determination".format(deg), )
-                                            # "determination".format(deg),
-                                            # fit_res['determination'])
+                                            "determination".format(deg),
+                                            fit_res['determination'])
                         fit_res = polyfit(curr_poi, np.log(curr_median), 1)
                         write_short_msg("exp fit coeff of "
                                         "determination",
