@@ -1,4 +1,4 @@
-## Neuromorphic cerebellum learning to perform the vestibulo-ocular reflex (VOR)
+# Neuromorphic cerebellum learning to perform the vestibulo-ocular reflex (VOR)
 
 
 This work presents the implementation of a biologically inspired and adaptive robot control system on neuromorphic hardware.
@@ -15,7 +15,7 @@ The system is shown to perform the task in simulated and physical environments.
  The circuit's ability is shown in a tightly-coupled simulated environment (SpiNNGym),
  in a loosely-coupled simulated environment (NRP) and in a physical robot (iCub).
 
- # Installation
+## Installation
 
  This installation assumes the existence of either sPyNNaker or NEST, for brevity.
 For installation instructions for NEST, please follow official directions. For SpiNNaker, 3 shell scripts are provided
@@ -41,11 +41,11 @@ pip install .
 ```
 
 
-# Use
+## Use
 
 Each experiment script is stand-alone. However, full-scale experiments can have arguments passed to them via the
 argparser.
 
-# Citation
+## Citation
 
 When citing this work, the authors would prefer you to cite the [related journal article](https://doi.org/10.3389/fncel.2021.622870).
