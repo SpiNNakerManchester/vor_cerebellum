@@ -7,10 +7,10 @@ The network learns to perform the vestibulo-ocular reflex (VOR) in real-time.
 The system is shown to perform the task in simulated and physical environments.
 
  This work uses a model designed by Naveros et al
- (F. Naveros, J. A. Garrido, A. Arleo, E. Ros and N. R. Luque,
+ <small>(F. Naveros, J. A. Garrido, A. Arleo, E. Ros and N. R. Luque,
  "Exploring Vestibulo-Ocular Adaptation in a Closed-Loop Neuro-Robotic Experiment Using STDP. A Simulation Study,"
  2018 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), Madrid, 2018, pp. 1-9,
- doi: 10.1109/IROS.2018.8594019.).
+ doi: [10.1109/IROS.2018.8594019](https://doi.org/10.1109/IROS.2018.8594019).)</small>.
  The model is ported onto SpiNNaker and simulated using [sPyNNaker](https://github.com/spinnakermanchester/spynnaker).
  The circuit's ability is shown in a tightly-coupled simulated environment (SpiNNGym),
  in a loosely-coupled simulated environment (NRP) and in a physical robot (iCub).
