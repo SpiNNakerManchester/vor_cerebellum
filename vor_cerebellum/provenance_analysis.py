@@ -234,8 +234,8 @@ def save_provenance_to_file_from_database(in_file, sim_name):
         metadata['structured_provenance_filename'] = in_file
 
         pr = ProvenanceReader(
-            os.path.join(SpynnakerDataView().get_provenance_dir_path(),
-                         "provenance.sqlite3"))
+            os.path.join(SpynnakerDataView().get_run_dir_path(),
+                         "data.sqlite3"))
 
         cores_list = pr.get_cores_with_provenance()
 
@@ -321,7 +321,7 @@ def get_provenance_for_core(pr, x, y, p):
     for column_to_get in columns_to_get:
         query = """
             SELECT the_value
-            FROM core_provenance
+            FROM core_provenance_view
             WHERE x = ? AND y = ? AND p = ? AND description = ?
             """
         structured_prov[column_to_get] = pr.run_query(
@@ -333,7 +333,7 @@ def get_provenance_for_core(pr, x, y, p):
 def get_core_provenance_value(pr, x, y, p, description):
     query = """
         SELECT the_value
-        FROM core_provenance
+        FROM core_provenance_view
         WHERE x = ? AND y = ? AND p = ? AND description = ?
         """
     return pr.run_query(query, [x, y, p, description])
