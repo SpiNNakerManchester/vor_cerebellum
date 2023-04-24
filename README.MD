@@ -46,7 +46,3 @@ pip install .
 
 Each experiment script is stand-alone. However, full-scale experiments can have arguments passed to them via the
 argparser.
-
-## Citation
-
-When citing this work, the authors would prefer you to cite the [related journal article](https://doi.org/10.3389/fncel.2021.622870).
