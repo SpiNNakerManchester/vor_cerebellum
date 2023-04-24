@@ -1,0 +1,72 @@
+# Copyright (c) 2017 The University of Manchester
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+cff-version: 1.1.0
+message: If you use this software, please cite it as below.
+title: Towards a Bio-Inspired Real-Time Neuromorphic Cerebellum
+repository-code: https://github.com/SpiNNakerManchester/vor_cerebellum/
+version: 0.0.1
+url: https://doi.org/10.3389/fncel.2021.622870
+license: GPL-3.0-or-later
+date-released: 2021-05-31
+identifier: vor_cerebellum
+authors:
+- affiliation: University Of Manchester
+  family-names: Bogdan
+  given-names: Petruţ A.
+  orcid: https://orcid.org/0000-0001-5535-7865
+- affiliation: University Of Pavia
+  family-names: Marcinnò
+  given-names: Beatrice
+- affiliation: University Of Pavia
+  family-names: Casellato
+  given-names: Claudia
+  orcid: https://orcid.org/0000-0002-8729-0391
+- affiliation: University Of Pavia
+  family-names: Casali
+  given-names: Stefano
+  orcid: https://orcid.org/0000-0003-3952-8059
+- affiliation: University Of Manchester
+  email: Andrew.Rowley@manchester.ac.uk
+  family-names: Rowley
+  given-names: Andrew
+  orcid: https://orcid.org/0000-0002-2646-8520
+  website: https://www.researchgate.net/profile/Andrew_Rowley2
+- affiliation: University Of Manchester
+  family-names: Hopkins
+  given-names: Michael
+- affiliation: University Of Pavia
+  family-names: Leporati
+  given-names: Francesco
+  orcid: https://orcid.org/0000-0003-2901-4935
+- affiliation: University Of Pavia
+  family-names: D'Angelo
+  given-names: Egidio
+  orcid: https://orcid.org/0000-0002-6007-7187
+- affiliation: University Of Manchester
+  family-names: Rhodes
+  given-names: Oliver
+  orcid: https://orcid.org/0000-0003-1728-2828
+contact:
+- address: University of Manchester, Oxford Road
+  city: Manchester
+  country: GB
+  name: SpiNNaker Software Team
+  post-code: M13 9PL
+email: spinnakerusers@googlegroups.com
+keywords:
+  - spinnaker
+  - neuromorphics
+  - "spiking neural networks"
+  - cerebellum
