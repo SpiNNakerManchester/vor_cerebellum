@@ -146,8 +146,8 @@ cython_debug/
 *.out
 
 # sPyNNaker reports and generated files
-*application_generated_data_files/
-*reports/
+application_generated_data_files/
+reports/
 
 .project
 .settings/
