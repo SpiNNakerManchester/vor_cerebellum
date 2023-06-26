@@ -17,7 +17,7 @@ from __future__ import print_function
 import pyNN.spiNNaker as sim
 
 from pyNN.utility.plotting import Figure, Panel
-from pyNN.random import RandomDistribution, NumpyRNG
+from pyNN.random import RandomDistribution
 
 # PAB imports
 import traceback
@@ -69,15 +69,13 @@ num_CF_neurons = 200
 
 # Random distribution for synapses delays and weights (MF and GO)
 delay_distr = RandomDistribution(
-    'uniform', (1.0, 10.0), rng=NumpyRNG(seed=85524))
+    'uniform', (1.0, 10.0))
 
 weight_distr_MF = RandomDistribution(
-    'uniform', (mf_gc_weights * 0.8, mf_gc_weights * 1.2),
-    rng=NumpyRNG(seed=85524))
+    'uniform', (mf_gc_weights * 0.8, mf_gc_weights * 1.2))
 
 weight_distr_GO = RandomDistribution(
-    'uniform', (go_gc_weights * 0.8, go_gc_weights * 1.2),
-    rng=NumpyRNG(seed=24568))
+    'uniform', (go_gc_weights * 0.8, go_gc_weights * 1.2))
 
 all_neurons = {
     "mossy_fibers": num_MF_neurons,
@@ -99,8 +97,7 @@ all_projections = {}
 # Weights of pf_pc
 weight_dist_pfpc = RandomDistribution('uniform',
                                       (pfpc_initial_weight * 0.8,
-                                       pfpc_initial_weight * 1.2),
-                                      rng=NumpyRNG(seed=24534))
+                                       pfpc_initial_weight * 1.2))
 
 global_n_neurons_per_core = 50
 per_pop_neurons_per_core_constraint = {
@@ -169,7 +166,7 @@ all_populations["mossy_fibers"] = MF_population
 # Create GOC population
 GOC_population = sim.Population(
     num_GOC_neurons, sim.IF_cond_exp(), label='GOCLayer',
-    additional_parameters={"rb_left_shifts": rbls['golgi']})
+    additional_parameters={"rb_left_shifts": rbls['golgi'], 'seed': 24534})
 all_populations["golgi"] = GOC_population
 
 # create PC population
@@ -177,7 +174,7 @@ PC_population = sim.Population(
     num_PC_neurons,  # number of neurons
     sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
     label="Purkinje Cell",
-    additional_parameters={"rb_left_shifts": rbls['purkinje']})
+    additional_parameters={"rb_left_shifts": rbls['purkinje'], 'seed': 24534})
 all_populations["purkinje"] = PC_population
 
 # create VN population
@@ -185,13 +182,13 @@ VN_population = sim.Population(
     num_VN_neurons,  # number of neurons
     sim.extra_models.IFCondExpCerebellum(**neuron_params),  # Neuron model
     label="Vestibular Nuclei",
-    additional_parameters={"rb_left_shifts": rbls['vn']})
+    additional_parameters={"rb_left_shifts": rbls['vn'], 'seed': 24534})
 all_populations["vn"] = VN_population
 
 # Create GrC population
 GC_population = sim.Population(
     num_GC_neurons, sim.IF_curr_exp(), label='GCLayer',
-    additional_parameters={"rb_left_shifts": rbls['granule']})
+    additional_parameters={"rb_left_shifts": rbls['granule'], 'seed': 24534})
 all_populations["granule"] = GC_population
 
 # generate fake error (it should be calculated from sensorial activity in
@@ -392,7 +389,7 @@ for i in range(samples_in_repeat):
     print(total_runtime)
 
     MF_population.set(rate=sensorial_activity(
-        _head_pos[total_runtime], _head_vel[total_runtime])[0])
+        _head_pos[0], _head_vel[0])[0])
 
 end_time = datetime.now()
 total_time = end_time - start_time
@@ -456,7 +453,7 @@ try:
         final_connectivity[label] = conn
 except Exception:  # pylint: disable=broad-except
     # This simulator might not support the way this is done
-    final_connectivity = []
+    final_connectivity = {}
     traceback.print_exc()
 
 sim.end()
