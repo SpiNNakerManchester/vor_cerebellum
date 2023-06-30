@@ -481,7 +481,7 @@ try:
         final_connectivity[label] = conn
 except Exception:  # pylint: disable=broad-except
     # This simulator might not support the way this is done
-    final_connectivity = []
+    final_connectivity = {}
     traceback.print_exc()
 
 # Get the data from the ICubVorEnv pop
