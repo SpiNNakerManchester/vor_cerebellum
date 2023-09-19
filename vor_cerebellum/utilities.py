@@ -1,3 +1,18 @@
+# Copyright (c) 2022 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 Utilities mostly taken from https://github.com/spinnakermanchester/spinncer
 """
@@ -9,7 +24,8 @@ import copy
 import os
 import string
 import traceback
-from mpl_toolkits.axes_grid1 import make_axes_locatable, ImageGrid
+from datetime import datetime
+from mpl_toolkits.axes_grid1 import make_axes_locatable  # ImageGrid
 
 from elephant.spike_train_generation import homogeneous_poisson_process
 import quantities as pq
@@ -29,12 +45,12 @@ POS_TO_VEL = 2 * np.pi * 0.001
 
 fig_folder = "figures/"
 # Check if the folders exist
-if not os.path.isdir(fig_folder) and not os.path.exists(fig_folder):
+if not os.path.exists(fig_folder):
     os.mkdir(fig_folder)
 
 result_dir = "results/"
 # Check if the results folder exist
-if not os.path.isdir(result_dir) and not os.path.exists(result_dir):
+if not os.path.exists(result_dir):
     os.mkdir(result_dir)
 
 PREFFERED_ORDER = [
@@ -50,7 +66,7 @@ COMMON_DISPLAY_NAMES = {
     'f_peak': "$f_{peak}$ (Hz)",
     'spinnaker': "SpiNNaker",
     'nest': "NEST",
-    'stim_radius': "Stimulation radius ($\mu m$)",
+    'stim_radius': "Stimulation radius ($mu m$)",
     'glomerulus cells': "Glom",
     'glomerulus': "Glom",
     'granule cells': "GrC",
@@ -97,7 +113,6 @@ COMMON_DISPLAY_NAMES = {
     'mf_vn': "MF-VN",
     'cf_pc': "CF-PC",
     'mf_goc': "MF-GoC",
-    'vn': 'VN',
     'grc': 'GrC',
     'goc': 'GoC',
     'cf': 'CF',
@@ -174,43 +189,38 @@ def convert_spikes(neo, run=0):
 
 
 # Examples of get functions for variables
-def get_error(icub_vor_env_pop, simulator):
+def get_error(icub_vor_env_pop):
+    # pylint: disable-next=protected-access
     b_vertex = icub_vor_env_pop._vertex
-    error = b_vertex.get_data(
-        'error', simulator.no_machine_time_steps, simulator.placements,
-        simulator.buffer_manager, simulator.machine_time_step)
+    error = b_vertex.get_recorded_data('error')
     return error.tolist()
 
 
-def get_l_count(icub_vor_env_pop, simulator):
+def get_l_count(icub_vor_env_pop):
+    # pylint: disable-next=protected-access
     b_vertex = icub_vor_env_pop._vertex
-    left_count = b_vertex.get_data(
-        'l_count', simulator.no_machine_time_steps, simulator.placements,
-        simulator.buffer_manager, simulator.machine_time_step)
+    left_count = b_vertex.get_recorded_data('l_count')
     return left_count.tolist()
 
 
-def get_r_count(icub_vor_env_pop, simulator):
+def get_r_count(icub_vor_env_pop):
+    # pylint: disable-next=protected-access
     b_vertex = icub_vor_env_pop._vertex
-    right_count = b_vertex.get_data(
-        'r_count', simulator.no_machine_time_steps, simulator.placements,
-        simulator.buffer_manager, simulator.machine_time_step)
+    right_count = b_vertex.get_recorded_data('r_count')
     return right_count.tolist()
 
 
-def get_eye_pos(icub_vor_env_pop, simulator):
+def get_eye_pos(icub_vor_env_pop):
+    # pylint: disable-next=protected-access
     b_vertex = icub_vor_env_pop._vertex
-    eye_positions = b_vertex.get_data(
-        'eye_pos', simulator.no_machine_time_steps, simulator.placements,
-        simulator.buffer_manager, simulator.machine_time_step)
+    eye_positions = b_vertex.get_recorded_data('eye_pos')
     return eye_positions.tolist()
 
 
-def get_eye_vel(icub_vor_env_pop, simulator):
+def get_eye_vel(icub_vor_env_pop):
+    # pylint: disable-next=protected-access
     b_vertex = icub_vor_env_pop._vertex
-    eye_velocities = b_vertex.get_data(
-        'eye_vel', simulator.no_machine_time_steps, simulator.placements,
-        simulator.buffer_manager, simulator.machine_time_step)
+    eye_velocities = b_vertex.get_recorded_data('eye_vel')
     return eye_velocities.tolist()
 
 
@@ -235,15 +245,15 @@ def generate_head_position_and_velocity(time, dt=0.001, slowdown=1):
     return pos, vel
 
 
-def retrieve_and_package_results(icub_vor_env_pop, simulator):
+def retrieve_and_package_results(icub_vor_env_pop):
     # Get the data from the ICubVorEnv pop
-    errors = np.asarray(get_error(icub_vor_env_pop=icub_vor_env_pop, simulator=simulator)).ravel()
-    l_counts = get_l_count(icub_vor_env_pop=icub_vor_env_pop, simulator=simulator)
-    r_counts = get_r_count(icub_vor_env_pop=icub_vor_env_pop, simulator=simulator)
+    errors = np.asarray(get_error(icub_vor_env_pop=icub_vor_env_pop)).ravel()
+    l_counts = get_l_count(icub_vor_env_pop=icub_vor_env_pop)
+    r_counts = get_r_count(icub_vor_env_pop=icub_vor_env_pop)
     rec_eye_pos = np.asarray(get_eye_pos(
-        icub_vor_env_pop=icub_vor_env_pop, simulator=simulator)).ravel()
+        icub_vor_env_pop=icub_vor_env_pop)).ravel()
     rec_eye_vel = np.asarray(get_eye_vel(
-        icub_vor_env_pop=icub_vor_env_pop, simulator=simulator)).ravel()
+        icub_vor_env_pop=icub_vor_env_pop)).ravel()
     results = {
         'errors': errors,
         'l_counts': l_counts,
@@ -261,7 +271,8 @@ def highlight_area(ax, runtime, start_nid, stop_nid):
     )
 
 
-def plot_results(results_dict, simulation_parameters, name, all_spikes, xlim=None):
+def plot_results(
+        results_dict, simulation_parameters, name, all_spikes, xlim=None):
     # unpacking results
     errors = results_dict['errors']
     l_counts = results_dict['l_counts']
@@ -302,8 +313,10 @@ def plot_results(results_dict, simulation_parameters, name, all_spikes, xlim=Non
     plt.ylim([-0.1, vn_size + 0.1])
     # L/R counts
     ax2 = plt.subplot(6, 1, 2)
-    plt.plot(x_plot, l_counts, 'o', color=viridis_cmap(.25), label="l_counts", rasterized=True)
-    plt.plot(x_plot, r_counts, 'o', color=viridis_cmap(.75), label="r_counts", rasterized=True)
+    plt.plot(x_plot, l_counts, 'o', color=viridis_cmap(.25), label="l_counts",
+             rasterized=True)
+    plt.plot(x_plot, r_counts, 'o', color=viridis_cmap(.75), label="r_counts",
+             rasterized=True)
     plt.legend(loc="best")
     ax2.set_ylabel("R/L accums.")
     if xlim:
@@ -317,9 +330,11 @@ def plot_results(results_dict, simulation_parameters, name, all_spikes, xlim=Non
     ax2 = plt.subplot(6, 1, 3)
     plt.plot(x_plot, rec_eye_pos, label="rec. eye position")
     plt.plot(x_plot, rec_eye_vel, label="rec. eye velocity")
-    plt.plot(x_plot, np.tile(perfect_eye_pos[::error_window_size], runtime // 1000)[:len_recs],
+    plt.plot(x_plot, np.tile(
+        perfect_eye_pos[::error_window_size], runtime // 1000)[:len_recs],
              label="eye position", ls=':', rasterized=True)
-    plt.plot(x_plot, np.tile(perfect_eye_vel[::error_window_size], runtime // 1000)[:len_recs],
+    plt.plot(x_plot, np.tile(
+        perfect_eye_vel[::error_window_size], runtime // 1000)[:len_recs],
              label="eye velocity", ls=':', rasterized=True)
     plt.legend(loc="best")
     ax2.set_ylabel("Pos. & Vel.")
@@ -330,11 +345,16 @@ def plot_results(results_dict, simulation_parameters, name, all_spikes, xlim=Non
     # Errors
     ax2 = plt.subplot(6, 1, 4)
     plt.plot(x_plot, errors, label="recorded error")
-    eye_pos_diff = np.tile(perfect_eye_pos[::error_window_size], runtime // 1000)[:len_recs] - rec_eye_pos.ravel()
-    eye_vel_diff = np.tile(perfect_eye_vel[::error_window_size], runtime // 1000)[:len_recs] - rec_eye_vel.ravel()
-    reconstructed_error = eye_pos_diff + eye_vel_diff
+    eye_pos_diff = np.tile(
+        perfect_eye_pos[::error_window_size], runtime // 1000)[
+            :len_recs] - rec_eye_pos.ravel()
+    eye_vel_diff = np.tile(
+        perfect_eye_vel[::error_window_size], runtime // 1000)[
+            :len_recs] - rec_eye_vel.ravel()
+    # reconstructed_error = eye_pos_diff + eye_vel_diff
 
-    #     plt.plot(x_plot, reconstructed_error, color='k', ls=":", label="reconstructed error")
+    # plt.plot(x_plot, reconstructed_error, color='k', ls=":",
+    #          label="reconstructed error")
     plt.plot(x_plot, eye_pos_diff,
              label="eye position diff", rasterized=True)
     plt.plot(x_plot, eye_vel_diff,
@@ -386,8 +406,8 @@ def plot_results(results_dict, simulation_parameters, name, all_spikes, xlim=Non
     plt.close(fig)
 
 
-def color_for_index(index, size, cmap=viridis_cmap):
-    return cmap(1 / (size - index + 1))
+# def color_for_index(index, size, cmap=viridis_cmap):
+#     return cmap(1 / (size - index + 1))
 
 
 def remap_odd_even(original_spikes, size):
@@ -406,10 +426,6 @@ def remap_second_half_descending(original_spikes, size):
     mapping[size // 2:] = np.arange(size, size // 2, -1)
     remapped_spikes[:, 0] = mapping[remapped_spikes[:, 0].astype(int)]
     return remapped_spikes
-
-
-def color_for_index(index, size, cmap=viridis_cmap):
-    return cmap(index / (size + 1))
 
 
 def write_sep():
@@ -434,14 +450,15 @@ def write_value(msg, value):
     print("{:60}:{:19}".format(msg, str(value)))
 
 
-def save_figure(plt, name, extensions=(".png",), **kwargs):
+def save_figure(plot, name, extensions=(".png",), **kwargs):
     for ext in extensions:
         write_short_msg("Plotting", name + ext)
-        plt.savefig(name + ext, **kwargs)
+        plot.savefig(name + ext, **kwargs)
 
 
 def sensorial_activity(head_pos, head_vel):
-    # Head position and velocity seem to be retrieve from a look-up table then updated
+    # Head position and velocity seem to be retrieved from a look-up table
+    # then updated
     # single point over time
     # head_pos = _head_pos[pt]
     # head_vel = _head_vel[pt]
@@ -464,15 +481,18 @@ def sensorial_activity(head_pos, head_vel):
     MF_pos_activity = np.zeros((50))
     MF_vel_activity = np.zeros((50))
 
-    # generate gaussian distributions around the neuron tuned to a given sensorial activity
+    # generate gaussian distributions around the neuron tuned to a given
+    # sensorial activity
     for i in range(50):
         mean = float(i) / 50.0 + 0.01
-        gaussian = np.exp(-((head_pos - mean) * (head_pos - mean)) / (2.0 * sigma * sigma))
+        gaussian = np.exp(
+            -((head_pos - mean) * (head_pos - mean)) / (2.0 * sigma * sigma))
         MF_pos_activity[i] = min_rate + gaussian * (max_rate - min_rate)
 
     for i in range(50):
         mean = float(i) / 50.0 + 0.01
-        gaussian = np.exp(-((head_vel - mean) * (head_vel - mean)) / (2.0 * sigma * sigma))
+        gaussian = np.exp(
+            -((head_vel - mean) * (head_vel - mean)) / (2.0 * sigma * sigma))
         MF_vel_activity[i] = min_rate + gaussian * (max_rate - min_rate)
 
     sa_mean_freq = np.concatenate((MF_pos_activity, MF_vel_activity))
@@ -481,7 +501,8 @@ def sensorial_activity(head_pos, head_vel):
 
 
 # Error Activity: error from eye and head encoders
-def error_activity(error_, low_rate, high_rate):
+# def error_activity(error_, low_rate, high_rate):
+def error_activity(low_rate, high_rate):
     #     min_rate = 1.0
     #     max_rate = 25.0
     #
@@ -490,22 +511,24 @@ def error_activity(error_, low_rate, high_rate):
     IO_agonist = np.zeros((100))
     IO_antagonist = np.zeros((100))
     #
-    #     rate = []
-    #     for i in range (100):
-    #         if(i < up_neuron_ID_threshold):
-    #             rate.append(max_rate)
-    #         elif(i<low_neuron_ID_threshold):
-    #             aux_rate=max_rate - (max_rate-min_rate)*((i - up_neuron_ID_threshold)/(low_neuron_ID_threshold - up_neuron_ID_threshold))
-    #             rate.append(aux_rate)
-    #         else:
-    #             rate.append(min_rate)
-    #
-    #     if error_>=0.0:
-    #         IO_agonist[0:100]=min_rate
-    #         IO_antagonist=rate
+    # rate = []
+    # for i in range (100):
+    #     if(i < up_neuron_ID_threshold):
+    #         rate.append(max_rate)
+    #     elif(i<low_neuron_ID_threshold):
+    #         aux_rate=max_rate - (max_rate-min_rate)*(
+    #             (i - up_neuron_ID_threshold)/(
+    #                 low_neuron_ID_threshold - up_neuron_ID_threshold))
+    #         rate.append(aux_rate)
     #     else:
-    #         IO_antagonist[0:100]=min_rate
-    #         IO_agonist=rate
+    #         rate.append(min_rate)
+    #
+    # if error_>=0.0:
+    #     IO_agonist[0:100]=min_rate
+    #     IO_antagonist=rate
+    # else:
+    #     IO_antagonist[0:100]=min_rate
+    #     IO_agonist=rate
     IO_agonist[:] = high_rate
     IO_antagonist[:] = low_rate
 
@@ -517,7 +540,8 @@ def error_activity(error_, low_rate, high_rate):
 def process_VN_spiketrains(VN_spikes, t_start):
     total_spikes = 0
     for spiketrain in VN_spikes.segments[0].spiketrains:
-        s = spiketrain.as_array()[np.where(spiketrain.as_array() >= t_start)[0]]
+        s = spiketrain.as_array(
+            )[np.where(spiketrain.as_array() >= t_start)[0]]
         total_spikes += len(s)
 
     return total_spikes
@@ -536,20 +560,21 @@ def retrieve_git_commit():
         # We have to use `stdout=PIPE, stderr=PIPE` instead of `text=True`
         # when using Python 3.6 and earlier. Python 3.7+ will have these QOL
         # improvements
-        proc = subprocess.run(bash_command.split(),
-                              stdout=PIPE, stderr=PIPE, shell=False)
+        proc = subprocess.run(bash_command.split(), stdout=PIPE, stderr=PIPE,
+                              shell=False, check=True)
         return proc.stdout
     except subprocess.CalledProcessError as e:
         print("Failed to retrieve git commit HASH-", str(e))
         return "CalledProcessError"
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         print("Failed to retrieve git commit HASH more seriously-", str(e))
         return "GeneralError"
 
 
 def create_poisson_spikes(n_inputs, rates, starts, durations):
     spike_times = [[] for _ in range(n_inputs)]
-    for i, rate, start, duration in zip(range(n_inputs), rates, starts, durations):
+    for i, rate, start, duration in zip(
+            range(n_inputs), rates, starts, durations):
         curr_spikes = []
         for r, s, d in zip(rate, start, duration):
             curr_spikes.append(homogeneous_poisson_process(
@@ -561,13 +586,15 @@ def create_poisson_spikes(n_inputs, rates, starts, durations):
     return spike_times
 
 
-def floor_spike_time(times, dt=0.1 * pq.ms, t_start=0 * pq.ms, t_stop=1000.0 * pq.ms):
+def floor_spike_time(
+        times, dt=0.1 * pq.ms, t_start=0 * pq.ms, t_stop=1000.0 * pq.ms):
     bins = np.arange(t_start, t_stop + dt, dt)
     count, bin_edges = np.histogram(times, bins=bins)
     present_times_filter = count > 0
     selected_spike_times = (bin_edges[:-1])[present_times_filter]
-    # Allow for multiple spikes in a timestep if that's how spike times get rounded
-    rounded_spike_times = np.repeat(selected_spike_times, repeats=count[present_times_filter])
+    # Allow for multiple spikes in a timestep if that's how times get rounded
+    rounded_spike_times = np.repeat(
+        selected_spike_times, repeats=count[present_times_filter])
     # Check that there are the same number of spikes out as spikes in
     assert (len(rounded_spike_times) == len(times))
     return rounded_spike_times
@@ -617,19 +644,20 @@ def take_connectivity_snapshot(all_projections, final_connectivity):
                 print("Projection", label, "is not implemented!")
                 continue
             print("Retrieving connectivity for projection ", label, "...")
+            print("projection is ", p)
             try:
-                conn = \
-                    np.array(p.get(('weight', 'delay'),
-                                   format="list")._get_data_items())
-            except Exception as e:
+                # pylint: disable-next=protected-access
+                conn = np.array(p.get(('weight', 'delay'),
+                                      format="list")._get_data_items())
+            except Exception as e:  # pylint: disable=broad-except
                 print("Careful! Something happened when retrieving the "
                       "connectivity:", e, "\nRetrying...")
-                conn = \
-                    np.array(p.get(('weight', 'delay'), format="list"))
+#                conn = \
+#                    np.array(p.get(('weight', 'delay'), format="list"))
 
             conn = np.array(conn.tolist())
             final_connectivity[label].append(conn)
-    except:
+    except Exception:  # pylint: disable=broad-except
         # This simulator might not support the way this is done
         final_connectivity = []
         traceback.print_exc()
@@ -665,18 +693,21 @@ def retrieve_all_other_recordings(all_populations, full_recordings):
             other_recordings[label]['packets'] = np.array(
                 pop.get_data(['packets-per-timestep']).segments[0].filter(
                     name='packets-per-timestep'))[0].T
-        except:
+        except Exception:  # pylint: disable=broad-except
             print("Failed to retrieve packets-per-timestep")
 
-        neo_all_recordings[label] = pop.get_data('all')
+        neo_all_recordings[label] = pop.get_data(  # 'all')
+            ['v', 'spikes', 'gsyn_exc', 'gsyn_inh'])
 
     return other_recordings, neo_all_recordings
 
 
-def analyse_run(results_file, fig_folder, suffix):
+def analyse_run(results_file, filename, suffix):
     # Check if the folders exist
-    if not os.path.isdir(fig_folder) and not os.path.exists(fig_folder):
-        os.mkdir(fig_folder)
+    fig_folder_file = fig_folder + filename
+    if (not os.path.isdir(fig_folder_file)) and (
+            not os.path.exists(fig_folder_file)):
+        os.mkdir(fig_folder_file)
 
     # Get npz archive
     previous_run_data = np.load(results_file + ".npz", allow_pickle=True)
@@ -686,12 +717,14 @@ def analyse_run(results_file, fig_folder, suffix):
     all_neurons = previous_run_data['all_neurons'].ravel()[0]
     # TODO make sure all new runs save this info
     # all_neuron_params = previous_run_data['all_neuron_params'].ravel()[0]
-    simulation_parameters = previous_run_data['simulation_parameters'].ravel()[0]
-    other_recordings = previous_run_data['other_recordings'].ravel()[0]
+    simulation_parameters = previous_run_data[
+        'simulation_parameters'].ravel()[0]
+    # other_recordings = previous_run_data['other_recordings'].ravel()[0]
     final_connectivity = previous_run_data['final_connectivity'].ravel()[0]
-    simtime = previous_run_data['simtime']
-    cell_params = previous_run_data['cell_params'].ravel()[0]
-    per_pop_neurons_per_core_constraint = previous_run_data['per_pop_neurons_per_core_constraint'].ravel()[0]
+    # simtime = previous_run_data['simtime']
+    # cell_params = previous_run_data['cell_params'].ravel()[0]
+    # per_pop_neurons_per_core_constraint = previous_run_data[
+    #     'per_pop_neurons_per_core_constraint'].ravel()[0]
     icub_snapshots = previous_run_data['icub_snapshots']
     results = icub_snapshots[-1]
     runtime = simulation_parameters['runtime']
@@ -705,7 +738,7 @@ def analyse_run(results_file, fig_folder, suffix):
     print("Analysis report")
     print("-" * 80)
     print("Current time",
-          plt.datetime.datetime.now().strftime("%H:%M:%S on %d.%m.%Y"))
+          datetime.now().strftime("%H:%M:%S on %d.%m.%Y"))
     # Report number of neurons
     print("=" * 80)
     print("Number of neurons in each population")
@@ -724,12 +757,12 @@ def analyse_run(results_file, fig_folder, suffix):
         if final_connectivity[key] is None or conn.size == 0:
             print("Skipping analysing connection", key)
             continue
-        conn_exists = True
+        # conn_exists = True
         if len(conn.shape) == 1 or conn.shape[1] != 4:
             try:
                 x = np.concatenate(conn)
                 conn = x
-            except:
+            except Exception:  # pylint: disable=broad-except
                 traceback.print_exc()
             names = [('source', 'int_'),
                      ('target', 'int_'),
@@ -741,7 +774,11 @@ def analyse_run(results_file, fig_folder, suffix):
             final_connectivity[key] = useful_conn.astype(np.float)
             conn = useful_conn.astype(np.float)
         conn_dict[key] = conn
-        mean = np.mean(conn[:, 2])
+        if conn.ndim == 1:
+            # there's only one entry
+            mean = conn[2]
+        else:
+            mean = np.mean(conn[:, 2])
         print("{:27} -> {:4.6f} uS".format(
             key, mean))
 
@@ -750,10 +787,13 @@ def analyse_run(results_file, fig_folder, suffix):
     for key in final_connectivity:
         try:
             conn = conn_dict[key][-1]
-            mean = np.mean(conn[:, 3])
+            if conn.ndim == 1:
+                mean = conn[3]
+            else:
+                mean = np.mean(conn[:, 3])
             print("{:27} -> {:4.2f} ms".format(
                 key, mean))
-        except:
+        except Exception:  # pylint: disable=broad-except
             print(key)
             traceback.print_exc()
 
@@ -777,7 +817,7 @@ def analyse_run(results_file, fig_folder, suffix):
         curr_ax.set_title(use_display_name(pop))
     plt.xlabel("Time (ms)")
     f.tight_layout()
-    save_figure(plt, os.path.join(fig_folder, "raster_plots" + suffix),
+    save_figure(plt, os.path.join(fig_folder_file, "raster_plots" + suffix),
                 extensions=['.png', '.pdf'])
     plt.close(f)
 
@@ -792,51 +832,60 @@ def analyse_run(results_file, fig_folder, suffix):
             plt.title(use_display_name(proj))
             plt.xlabel("Weight")
             plt.ylabel("Count")
-            save_figure(plt, os.path.join(fig_folder, "{}_weight_histogram_snap{}".format(proj, i) + suffix),
+            save_figure(plt, os.path.join(
+                fig_folder_file,
+                "{}_weight_histogram_snap{}".format(proj, i) + suffix),
                         extensions=['.png', ])
             plt.close(f)
 
     # plot the data from the ICubVorEnv pop
-    plot_results(results_dict=results, simulation_parameters=simulation_parameters,
-                 name=os.path.join(fig_folder, "cerebellum_icub_first_1k" + suffix),
+    plot_results(results_dict=results,
+                 simulation_parameters=simulation_parameters,
+                 name=os.path.join(
+                     fig_folder_file, "cerebellum_icub_first_1k" + suffix),
                  all_spikes=all_spikes,
                  xlim=[0, 1000])
 
-    plot_results(results_dict=results, simulation_parameters=simulation_parameters,
-                 name=os.path.join(fig_folder, "cerebellum_icub_last_1k" + suffix),
+    plot_results(results_dict=results,
+                 simulation_parameters=simulation_parameters,
+                 name=os.path.join(
+                     fig_folder_file, "cerebellum_icub_last_1k" + suffix),
                  all_spikes=all_spikes,
                  xlim=[runtime - 1000, runtime])
 
-    plot_results(results_dict=results, simulation_parameters=simulation_parameters,
+    plot_results(results_dict=results,
+                 simulation_parameters=simulation_parameters,
                  all_spikes=all_spikes,
-                 name=os.path.join(fig_folder, "cerebellum_icub_full" + suffix))
+                 name=os.path.join(
+                     fig_folder_file, "cerebellum_icub_full" + suffix))
 
     # unpacking results
     errors = icub_snapshots[i]['errors']
-    l_counts = np.asarray(icub_snapshots[i]['l_counts']).ravel()
-    r_counts = np.asarray(icub_snapshots[i]['r_counts']).ravel()
-    rec_eye_pos = icub_snapshots[i]['rec_eye_pos']
-    rec_eye_vel = icub_snapshots[i]['rec_eye_vel']
+    # l_counts = np.asarray(icub_snapshots[i]['l_counts']).ravel()
+    # r_counts = np.asarray(icub_snapshots[i]['r_counts']).ravel()
+    # rec_eye_pos = icub_snapshots[i]['rec_eye_pos']
+    # rec_eye_vel = icub_snapshots[i]['rec_eye_vel']
 
     # unpacking simulation params
     runtime = simulation_parameters['runtime']
     error_window_size = simulation_parameters['error_window_size']
-    vn_spikes = simulation_parameters['vn_spikes']
-    cf_spikes = simulation_parameters['cf_spikes']
+    # vn_spikes = simulation_parameters['vn_spikes']
+    # cf_spikes = simulation_parameters['cf_spikes']
     perfect_eye_pos = simulation_parameters['perfect_eye_pos']
-    perfect_eye_vel = simulation_parameters['perfect_eye_vel']
-    vn_size = simulation_parameters['vn_size']
-    cf_size = simulation_parameters['cf_size']
+    # perfect_eye_vel = simulation_parameters['perfect_eye_vel']
+    # vn_size = simulation_parameters['vn_size']
+    # cf_size = simulation_parameters['cf_size']
 
     # Error plots
     # Evolution of error
-    # print("Plotting boxplot for {} for all populations".format(variable_name))
+    # print("Plotting boxplot for {} for all population".format(variable_name))
     pattern_period = perfect_eye_pos.shape[0]  # in ms
 
     n_plots = runtime / (pattern_period)
     error_windows_per_pattern = int(pattern_period / error_window_size)
-    reshaped_error = errors.reshape(errors.size // error_windows_per_pattern, error_windows_per_pattern)
-    maes = np.mean(np.abs(reshaped_error), axis=1)
+    reshaped_error = errors.reshape(errors.size // error_windows_per_pattern,
+                                    error_windows_per_pattern)
+    # maes = np.mean(np.abs(reshaped_error), axis=1)
 
     bp_width = 0.7
     f = plt.figure(figsize=(12, 8), dpi=600)
@@ -852,18 +901,19 @@ def analyse_run(results_file, fig_folder, suffix):
     plt.xlim([0, n_plots + 1])
     plt.grid(True, which="major", axis="y")
     plt.xlabel('Pattern #')
-    xtick_display_names = [str(int(x)) for x in np.arange(reshaped_error.shape[0]) + 1]
-    _, labels = plt.xticks(np.arange(n_plots) + 1, xtick_display_names)
+    xtick_display_names = [
+        str(int(x)) for x in np.arange(reshaped_error.shape[0]) + 1]
+    _, _labels = plt.xticks(np.arange(n_plots) + 1, xtick_display_names)
 
     f.tight_layout()
-    save_figure(plt, os.path.join(fig_folder,
+    save_figure(plt, os.path.join(fig_folder_file,
                                   "bp_errors{}".format(suffix)),
                 extensions=['.png', '.pdf'])
     plt.close(f)
 
     # Plot at 3 times during the simulation
-    f, axes = plt.subplots(1, 3,
-                           figsize=(14, 10), sharey='row', sharex='row', dpi=400)
+    f, axes = plt.subplots(
+        1, 3, figsize=(14, 10), sharey='row', sharex='row', dpi=400)
     periods = [0, reshaped_error.shape[0] // 2, reshaped_error.shape[0] - 1]
 
     for index, curr_ax in enumerate(axes):
@@ -880,36 +930,40 @@ def analyse_run(results_file, fig_folder, suffix):
     plt.tight_layout()
     save_figure(
         plt,
-        os.path.join(fig_folder, "error_evolution{}".format(suffix)),
+        os.path.join(fig_folder_file, "error_evolution{}".format(suffix)),
         extensions=[".png", ".pdf"])
     plt.close(f)
 
     f = plt.figure(figsize=(10, 7), dpi=400)
-    plt.plot(np.arange(reshaped_error.shape[0]) + 1, np.std(reshaped_error, axis=1))
+    plt.plot(np.arange(
+        reshaped_error.shape[0]) + 1, np.std(reshaped_error, axis=1))
     plt.ylabel("Error std.")
     plt.xlim([0, n_plots + 1])
     plt.grid(True, which="major", axis="y")
     plt.xlabel('Pattern #')
-    xtick_display_names = [str(int(x)) for x in np.arange(reshaped_error.shape[0]) + 1]
-    _, labels = plt.xticks(np.arange(n_plots) + 1, xtick_display_names)
+    xtick_display_names = [
+        str(int(x)) for x in np.arange(reshaped_error.shape[0]) + 1]
+    _, _labels = plt.xticks(np.arange(n_plots) + 1, xtick_display_names)
 
     f.tight_layout()
-    save_figure(plt, os.path.join(fig_folder,
+    save_figure(plt, os.path.join(fig_folder_file,
                                   "error_std{}".format(suffix)),
                 extensions=['.png', '.pdf'])
     plt.close(f)
 
     f = plt.figure(figsize=(10, 7), dpi=400)
-    plt.plot(np.arange(reshaped_error.shape[0]) + 1, np.mean(np.abs(reshaped_error), axis=1))
+    plt.plot(np.arange(
+        reshaped_error.shape[0]) + 1, np.mean(np.abs(reshaped_error), axis=1))
     plt.ylabel("Abs. error")
     plt.xlim([0, n_plots + 1])
     plt.grid(True, which="major", axis="y")
     plt.xlabel('Pattern #')
-    xtick_display_names = [str(int(x)) for x in np.arange(reshaped_error.shape[0]) + 1]
-    _, labels = plt.xticks(np.arange(n_plots) + 1, xtick_display_names)
+    xtick_display_names = [
+        str(int(x)) for x in np.arange(reshaped_error.shape[0]) + 1]
+    _, _labels = plt.xticks(np.arange(n_plots) + 1, xtick_display_names)
 
     f.tight_layout()
-    save_figure(plt, os.path.join(fig_folder,
+    save_figure(plt, os.path.join(fig_folder_file,
                                   "error_mae{}".format(suffix)),
                 extensions=['.png', '.pdf'])
     plt.close(f)
@@ -923,7 +977,8 @@ def analyse_run(results_file, fig_folder, suffix):
         write_value("pre_pop", pre_pop)
         write_value("post_pop", post_pop)
         ff_conn = final_connectivity[proj][-1]
-        conn_matrix = np.ones((all_neurons[pre_pop], all_neurons[post_pop])) * np.nan
+        conn_matrix = np.ones(
+            (all_neurons[pre_pop], all_neurons[post_pop])) * np.nan
         delay_matrix = np.ones(conn_matrix.shape) * np.nan
         for s, t, w, d in ff_conn:
             s = int(s)
@@ -948,8 +1003,8 @@ def analyse_run(results_file, fig_folder, suffix):
         ax.set_xlabel("Target Neuron ID")
         ax.set_ylabel("Source Neuron ID")
         ax.set_title(use_display_name(proj))
-        save_figure(plt, os.path.join(fig_folder,
-                                      "{}_weight_matrix{}".format(proj, suffix)),
+        save_figure(plt, os.path.join(
+            fig_folder_file, "{}_weight_matrix{}".format(proj, suffix)),
                     extensions=['.png', '.pdf'])
         plt.close(f)
 
@@ -970,8 +1025,8 @@ def analyse_run(results_file, fig_folder, suffix):
         # ax.set_xlabel("Target Neuron ID")
         # ax.set_ylabel("Source Neuron ID")
         # plt.title(use_display_name(proj))
-        # save_figure(plt, os.path.join(fig_folder,
-        #                               "{}_delay_matrix{}".format(proj, suffix)),
+        # save_figure(plt, os.path.join(
+        #     fig_folder_file, "{}_delay_matrix{}".format(proj, suffix)),
         #             extensions=['.png', '.pdf'])
         # plt.close(f)
 
@@ -979,7 +1034,8 @@ def analyse_run(results_file, fig_folder, suffix):
         pop_split = conn_matrix.shape[1] // 2
         weights_per_mc = []
         for pop_i in range(2):
-            weights_per_mc.append(conn_matrix[:, pop_i * pop_split:(pop_i + 1) * pop_split].ravel())
+            weights_per_mc.append(conn_matrix[
+                :, pop_i * pop_split:(pop_i + 1) * pop_split].ravel())
 
             print("Mean weight for this side:", np.mean(weights_per_mc[-1]))
 
@@ -992,8 +1048,9 @@ def analyse_run(results_file, fig_folder, suffix):
         plt.title(use_display_name(proj))
         plt.xlabel("Weight (uS)")
         plt.ylabel("Count")
-        save_figure(plt, os.path.join(fig_folder, "LR_{}_weight_histogram_snap{}".format(proj, suffix)),
-                    extensions=['.png', ])
+        save_figure(plt, os.path.join(
+            fig_folder_file, "LR_{}_weight_histogram_snap{}".format(
+                proj, suffix)), extensions=['.png', ])
         plt.close(f)
         write_sep()
 

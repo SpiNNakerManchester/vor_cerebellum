@@ -1,4 +1,20 @@
+# Copyright (c) 2022 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import argparse
+from pprint import pprint as pp
 
 DEFAULT_FIGURE_DIR = 'figures/'
 DEFAULT_RESULT_DIR = 'results/'
@@ -8,6 +24,7 @@ DEFAULT_TIMESTEP = 1.0  # ms
 DEFAULT_ERROR_WINDOW_SIZE = 10  # ms
 DEFAULT_GAIN = 20
 DEFAULT_MOVEMENT_SLOWDOWN_FACTOR = 1
+DEFAULT_FULL_RECORDINGS = True
 
 # rates used by cf
 DEFAULT_BACKGROUND_RATE = 2.  # Hz
@@ -34,13 +51,14 @@ parser.add_argument('--simtime', type=int,
                     default=DEFAULT_SINGLE_SIMTIME)
 
 parser.add_argument('--gain', type=float,
-                    help="amplification to contribution of a single spike to eye movement "
-                         "-- default {} ms".format(DEFAULT_GAIN),
+                    help="amplification to contribution of a single spike to "
+                         "eye movement -- default {} ms".format(DEFAULT_GAIN),
                     default=DEFAULT_GAIN)
 
 parser.add_argument('--slowdown_factor', type=int,
                     help="slowdown factor for head movement "
-                         "-- default {} ms".format(DEFAULT_MOVEMENT_SLOWDOWN_FACTOR),
+                         "-- default {} ms".format(
+                             DEFAULT_MOVEMENT_SLOWDOWN_FACTOR),
                     default=DEFAULT_MOVEMENT_SLOWDOWN_FACTOR)
 
 parser.add_argument('--single_simtime', type=int,
@@ -64,8 +82,9 @@ parser.add_argument('--simulator', type=str,
                     default=DEFAULT_SIMULATOR)
 
 parser.add_argument('--nest_grid', type=str,
-                    help="[NEST] which solver to use -- on_grid or off_grid (precise) "
-                         "-- default {} ms".format(DEFAULT_NEST_GRID_MODE),
+                    help="[NEST] which solver to use -- on_grid or off_grid "
+                         "(precise) -- default {} ms".format(
+                             DEFAULT_NEST_GRID_MODE),
                     default=DEFAULT_NEST_GRID_MODE)
 
 parser.add_argument('--f_base', type=float,
@@ -116,13 +135,15 @@ parser.add_argument('--target_reaching', action="store_true",
                     help='set position to which eyes have to target')
 
 parser.add_argument('--worst_case_spikes', action="store_true",
-                    help='[FOR ANALYSIS] if this flag is present the expensive '
-                         'process of counting number of afferent '
+                    help='[FOR ANALYSIS] if this flag is present the '
+                         'expensive process of counting number of afferent '
                          'spikes is performed.')
 
 parser.add_argument('--full_recordings', action="store_true",
-                    help='Enable the recording of v and gsyn, in addition to the default recordings:'
-                         ' spikes and packets per timestep per core.')
+                    help='Enable the recording of v and gsyn, in addition to '
+                         'the default recordings: spikes and packets per '
+                         'timestep per core.',
+                    default=DEFAULT_FULL_RECORDINGS)
 
 parser.add_argument('--suffix', type=str,
                     help="extra string to identify some files"
@@ -171,12 +192,14 @@ parser.add_argument('--pfpc_ltp_constant', type=float,
                     default=None)
 
 parser.add_argument('--snapshot', type=str, choices=["last", "best"],
-                    help="[network rebuilding] select whether to rebuild network with the _last_ "
-                         "extracted weights or the weights which produced the _best_ mean average error"
-                         "-- default {}".format("last"),
+                    help="[network rebuilding] select whether to rebuild "
+                         "network with the _last_ extracted weights or the "
+                         "weights which produced the _best_ mean average "
+                         "error -- default {}".format("last"),
                     default="last")
 
-parser.add_argument('--experiment', type=str, choices=["zero", "constant", "bistate", "tristate"],
+parser.add_argument('--experiment', type=str,
+                    choices=["zero", "constant", "bistate", "tristate"],
                     help="[target reaching] type of target reaching experiment"
                          "-- default {}".format("bistate"),
                     default="bistate")
@@ -184,10 +207,12 @@ parser.add_argument('--experiment', type=str, choices=["zero", "constant", "bist
 parser.add_argument('--no_provenance', action="store_true",
                     help='Disable provenance analysis.')
 
-args = parser.parse_args()
-from pprint import pprint as pp
+args, unknown = parser.parse_known_args()
 
 print("=" * 80)
 print("Args")
 pp(vars(args))
+print("-" * 80)
+print("unknown args")
+print(unknown)
 print("-" * 80)

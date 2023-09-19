@@ -1,3 +1,18 @@
+# Copyright (c) 2022 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 Parameters used in the cerebellum experiments
 """
@@ -5,7 +20,7 @@ Parameters used in the cerebellum experiments
 L_RATE = 2
 H_RATE = 20
 
-# Units used in PyNN simulations: http://neuralensemble.org/docs/PyNN/units.html
+# Units used in PyNN simulation: http://neuralensemble.org/docs/PyNN/units.html
 
 power = int(0)
 scaling_factor = 2 ** float(power)
@@ -48,7 +63,8 @@ vn_neuron_params = {
 
 # PF-PC learning parameters
 pfpc_min_weight = 0 * scaling_factor
-pfpc_max_weight = 2.9e-3 * scaling_factor  # 0.001  # setting this too high will silence VN too much.
+# setting this too high will silence VN too much.
+pfpc_max_weight = 2.9e-3 * scaling_factor  # 0.001
 pfpc_initial_weight = 5.0e-4 * scaling_factor  # pfpc_max_weight  # 0.0005
 pfpc_ltp_constant = pfpc_max_weight / 50.  # 2**(-15 + 6) / (2**10)  # 0.00005
 pfpc_ltd_constant = 0.8

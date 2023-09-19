@@ -140,13 +140,16 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# sPyNNaker.cfg
-*.cfg
-
 # figures
 *.png
 *.pdf
 *.out
 
-# IDE metadata
+# sPyNNaker reports and generated files
+application_generated_data_files/
+reports/
+
+.project
+.settings/
 .pydevproject
+**/*npz
