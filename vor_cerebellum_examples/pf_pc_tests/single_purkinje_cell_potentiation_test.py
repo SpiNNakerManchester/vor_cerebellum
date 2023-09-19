@@ -33,7 +33,7 @@ initial_weight = 0.0
 sim.setup(1)  # simulation timestep (ms)
 
 purkinje_cell = sim.Population(1,  # number of neurons
-                               sim.extra_models.IFCondExpCerebellum(
+                               sim.IF_cond_exp(
                                    **neuron_params),  # Neuron model
                                label="Purkinje Cell",
                                additional_parameters={

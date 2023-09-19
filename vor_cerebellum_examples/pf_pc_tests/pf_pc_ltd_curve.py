@@ -58,7 +58,7 @@ grc_spike_times = []
 
 for curr_timestep_diff in range(n_timesteps):
     purkinje_cell = p.Population(1,  # number of neurons
-                                 p.extra_models.IFCondExpCerebellum(
+                                 p.IF_cond_exp(
                                      **pc_neuron_params),  # Neuron model
                                  label="PC" + str(curr_timestep_diff),
                                  additional_parameters={

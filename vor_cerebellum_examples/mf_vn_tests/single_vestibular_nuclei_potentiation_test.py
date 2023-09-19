@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function
 import pyNN.spiNNaker as sim
 from pyNN.utility.plotting import Figure, Panel
 import numpy as np
@@ -30,7 +29,7 @@ initial_weight = 0.
 sim.setup(1)  # simulation timestep (ms)
 
 vestibular_neuclei = sim.Population(1,  # number of neurons
-                                    sim.extra_models.IFCondExpCerebellum(
+                                    sim.IF_cond_exp(
                                         **neuron_params),  # Neuron model
                                     label="Vestibular Nuclei",  # identifier
                                     additional_parameters={

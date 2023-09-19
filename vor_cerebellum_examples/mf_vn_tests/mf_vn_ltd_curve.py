@@ -58,7 +58,7 @@ all_mf_spike_times = []
 
 for curr_timestep_diff in range(n_timesteps):
     vn_cell = sim.Population(1,  # number of neurons
-                             sim.extra_models.IFCondExpCerebellum(
+                             sim.IF_cond_exp(
                                  **vn_neuron_params),  # Neuron model
                              label="VN" + str(curr_timestep_diff),
                              additional_parameters={

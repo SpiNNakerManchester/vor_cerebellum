@@ -37,7 +37,7 @@ initial_weight = 0.05
 # plastic_delay = 4
 
 purkinje_cell = sim.Population(1,  # number of neurons
-                               sim.extra_models.IFCondExpCerebellum(
+                               sim.IF_cond_exp(
                                    **neuron_params),  # Neuron model
                                additional_parameters={
                                    "rb_left_shifts": rbls['purkinje']},

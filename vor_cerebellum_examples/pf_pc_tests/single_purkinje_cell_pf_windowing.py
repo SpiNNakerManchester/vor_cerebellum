@@ -33,7 +33,7 @@ plastic_delay = 4
 
 p.setup(1)  # simulation timestep (ms)
 purkinje_cell = p.Population(1,  # number of neurons
-                             p.extra_models.IFCondExpCerebellum(
+                             p.IF_cond_exp(
                                  **neuron_params),  # Neuron model
                              label="PC",
                              additional_parameters={

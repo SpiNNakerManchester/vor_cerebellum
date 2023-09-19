@@ -167,7 +167,7 @@ sim.setup(timestep=1., min_delay=1, max_delay=15)
 #     sim.IF_cond_exp, global_n_neurons_per_core)
 # sim.set_number_of_neurons_per_core(sim.IF_curr_exp, 128)
 # sim.set_number_of_neurons_per_core(
-#     sim.extra_models.IFCondExpCerebellum, global_n_neurons_per_core)
+#     sim.IF_cond_exp, global_n_neurons_per_core)
 # sim.set_number_of_neurons_per_core(
 #     sim.extra_models.SpikeSourcePoissonVariable, ss_neurons_per_core)
 
@@ -237,7 +237,7 @@ all_populations["golgi"] = GOC_population
 # create PC population
 PC_population = sim.Population(
     num_PC_neurons,  # number of neurons
-    sim.extra_models.IFCondExpCerebellum(**pc_neuron_params),  # Neuron model
+    sim.IF_cond_exp(**pc_neuron_params),  # Neuron model
     label="PC",
     additional_parameters={"rb_left_shifts": rbls['purkinje'], 'seed': 24534})
 all_populations["purkinje"] = PC_population
@@ -245,7 +245,7 @@ all_populations["purkinje"] = PC_population
 # create VN population
 VN_population = sim.Population(
     num_VN_neurons,  # number of neurons
-    sim.extra_models.IFCondExpCerebellum(**vn_neuron_params),  # Neuron model
+    sim.IF_cond_exp(**vn_neuron_params),  # Neuron model
     label="VN",
     additional_parameters={"rb_left_shifts": rbls['vn'], 'seed': 24534})
 all_populations["vn"] = VN_population

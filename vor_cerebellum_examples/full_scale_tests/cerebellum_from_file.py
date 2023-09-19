@@ -136,7 +136,7 @@ sim.set_number_of_neurons_per_core(sim.SpikeSourceArray, ss_neurons_per_core)
 sim.set_number_of_neurons_per_core(sim.IF_cond_exp, global_n_neurons_per_core)
 sim.set_number_of_neurons_per_core(sim.IF_curr_exp, 128)
 sim.set_number_of_neurons_per_core(
-    sim.extra_models.IFCondExpCerebellum, global_n_neurons_per_core)
+    sim.IF_cond_exp, global_n_neurons_per_core)
 sim.set_number_of_neurons_per_core(
     sim.extra_models.SpikeSourcePoissonVariable, ss_neurons_per_core)
 
